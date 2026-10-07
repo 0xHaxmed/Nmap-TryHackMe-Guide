@@ -1,168 +1,168 @@
-# Nmap — الدليل الشامل للمبتدئين
+# Nmap — The Complete Beginner's Guide
 
-### شرح مفصّل لموديول Nmap في TryHackMe: الـ 4 Rooms + الـ Recap، مع حل الأسئلة وملخصات الأوامر
+### A detailed walkthrough of the Nmap module on TryHackMe: all 4 Rooms + the Recap, with answered questions and command summaries
 
-> **تنبيه قانوني وأخلاقي:** كل الأوامر في هذا الدليل مخصصة للتعلّم فقط، وتُستخدم على أجهزة تملكها أو لديك إذن مكتوب بفحصها: مثل بيئات TryHackMe و Hack The Box و CTF والمعامل الشخصية (VMs). فحص شبكات أو أجهزة بدون إذن قد يكون مخالفًا للقانون.
-
----
-
-## كيف تستخدم هذا الدليل
-
-- ابدأ بقسم **الأساسيات** (القسم 0) إذا كنت جديدًا على الشبكات. اقرأه مرة واحدة فقط وسيسهّل عليك كل ما بعده.
-- كل Room له قسم مستقل بنفس الترتيب: **الفكرة، الأوامر، كيف يعمل من الداخل، منظور المهاجم والمدافع، ثم حل الأسئلة**.
-- الأوامر مكتوبة بالإنجليزية كما تُكتب في الـ Terminal. الشرح بالعربية مع إبقاء المصطلحات التقنية بالإنجليزية.
-- **عن حل الأسئلة:** الأسئلة النظرية (مثل: ما هو الـ flag؟ ما الأمر؟) أجبت عنها مباشرة. أما الأسئلة العملية التي تطلب نتيجة فحص على جهاز الـ Lab فإجابتها تتغير مع كل Instance، لذلك كتبت لك **الأمر المطلوب وطريقة استخراج الإجابة من الـ output**، ومكانًا فارغًا لتكتب نتيجتك. هذا هو الأسلوب الذي يبني مهارة حقيقية.
+> **Legal & Ethical Notice:** every command in this guide is for learning purposes only, to be run against machines you own or are explicitly authorized to test — such as TryHackMe, Hack The Box, CTF environments, and your own personal labs (VMs). Scanning networks or devices without authorization may be illegal.
 
 ---
 
-## جدول المحتويات
+## How to Use This Guide
 
-0. [أساسيات لازمة قبل البدء](#basics)
+- Start with the **Fundamentals** section (Section 0) if you're new to networking. Read it once and everything after it will be much easier.
+- Each Room has its own self-contained section, following the same structure: **the idea, the commands, how it works under the hood, attacker vs. defender perspective, then the answered questions**.
+- Commands are written exactly as typed in the terminal. Explanations are in clear English with standard technical terminology.
+- **About answered questions:** theory questions (e.g., "what is the flag?", "what's the command?") are answered directly. Practical questions that require a result from scanning your own Lab machine have answers that change with every instance, so instead I give you **the exact command to run and how to read the answer out of the output**, with a blank for you to fill in your result. That's the approach that actually builds skill.
+
+---
+
+## Table of Contents
+
+0. [Fundamentals You Need Before Starting](#basics)
 1. [Room 1: Nmap Live Host Discovery](#room1)
 2. [Room 2: Nmap Basic Port Scans](#room2)
 3. [Room 3: Nmap Advanced Port Scans](#room3)
 4. [Room 4: Nmap Post Port Scans](#room4)
-5. [Topic Transition Recap: مراجعة شاملة وخطة عمل كاملة](#recap)
-6. [Cheat Sheet: كل الأوامر في صفحة واحدة](#cheatsheet)
-7. [أخطاء شائعة وحلولها](#troubleshooting)
-8. [المراجع ومصادر التعلّم](#resources)
-9. [قاموس المصطلحات](#glossary)
+5. [Topic Transition Recap: Full Review and Workflow](#recap)
+6. [Cheat Sheet: Every Command on One Page](#cheatsheet)
+7. [Common Mistakes and How to Fix Them](#troubleshooting)
+8. [References and Learning Resources](#resources)
+9. [Glossary](#glossary)
 
 ---
 
 <a id="basics"></a>
 
-## 0) أساسيات لازمة قبل البدء
+## 0) Fundamentals You Need Before Starting
 
-### 0.1 ما هو Nmap؟
+### 0.1 What Is Nmap?
 
-**Nmap** (Network Mapper) أداة مفتوحة المصدر لاكتشاف الأجهزة والخدمات على الشبكة. أنشأها Gordon Lyon (المعروف باسم Fyodor) وهي المعيار الفعلي في الـ Penetration Testing. تجيبك Nmap عن هذه الأسئلة:
+**Nmap** (Network Mapper) is an open-source tool for discovering devices and services on a network. Created by Gordon Lyon (known as Fyodor), it is the de facto standard in penetration testing. Nmap answers these questions for you:
 
-| السؤال | المرحلة |
+| Question | Phase |
 |---|---|
-| ما الأجهزة الشغالة (Live Hosts) على الشبكة؟ | Host Discovery |
-| ما المنافذ (Ports) المفتوحة على كل جهاز؟ | Port Scanning |
-| ما الخدمة ورقم نسختها على كل Port؟ | Service / Version Detection |
-| ما نظام التشغيل؟ | OS Detection |
-| هل توجد ثغرات أو معلومات إضافية؟ | Nmap Scripting Engine (NSE) |
+| Which devices (Live Hosts) are up on the network? | Host Discovery |
+| Which ports are open on each device? | Port Scanning |
+| What service and version is running on each port? | Service / Version Detection |
+| What operating system is it? | OS Detection |
+| Are there vulnerabilities or extra useful info? | Nmap Scripting Engine (NSE) |
 
-**المسار المنطقي للفحص** (وهو نفس ترتيب الـ Rooms):
+**The logical scanning path** (and the same order the Rooms follow):
 
 ```
 Live Host Discovery  ->  Port Scan  ->  Advanced/Evasion  ->  Service + OS + Scripts  ->  Save Results
      (Room 1)            (Room 2)         (Room 3)                  (Room 4)
 ```
 
-### 0.2 التثبيت والصيغة العامة
+### 0.2 Installation and General Syntax
 
 ```bash
-# Debian / Ubuntu / Kali (غالبًا مثبتة مسبقًا على Kali و AttackBox)
+# Debian / Ubuntu / Kali (often pre-installed on Kali and the AttackBox)
 sudo apt update && sudo apt install nmap -y
 
-# التحقق من النسخة
+# Check version
 nmap --version
 ```
 
-الصيغة العامة:
+General syntax:
 
 ```bash
 nmap [Scan Type] [Options] {target}
 ```
 
-أمثلة على الـ `{target}`:
+Examples of `{target}`:
 
 ```bash
-nmap 10.10.10.5                 # جهاز واحد
-nmap scanme.nmap.org            # اسم نطاق (Domain)
-nmap 10.10.10.1-20              # نطاق من الأجهزة
-nmap 10.10.10.0/24              # شبكة كاملة بصيغة CIDR
-nmap -iL targets.txt            # قراءة الأهداف من ملف
+nmap 10.10.10.5                 # a single host
+nmap scanme.nmap.org            # a domain name
+nmap 10.10.10.1-20              # a range of hosts
+nmap 10.10.10.0/24              # a whole network (CIDR notation)
+nmap -iL targets.txt            # read targets from a file
 ```
 
-> **ملاحظة:** الموقع `scanme.nmap.org` يسمح فريق Nmap بفحصه بشكل خفيف للتجربة، ولا تُسِئ استخدامه.
+> **Note:** `scanme.nmap.org` is a site the Nmap team explicitly allows light scanning against for practice. Don't abuse it.
 
-### 0.3 لماذا نستخدم `sudo` مع Nmap؟
+### 0.3 Why Do We Use `sudo` With Nmap?
 
-كثير من أنواع الفحص تحتاج إرسال **Raw Packets** (حزم مصنوعة يدويًا) وهذا يتطلب صلاحيات root.
+Many scan types need to send **Raw Packets** (hand-crafted packets), which requires root privileges.
 
-| الحالة | ما يحدث |
+| Situation | What Happens |
 |---|---|
-| تشغّل Nmap بصلاحيات root | يستخدم الأسرع والأقوى: **SYN Scan** (`-sS`) و **ARP** على الشبكة المحلية |
-| تشغّل Nmap بدون root | يستخدم **TCP Connect Scan** (`-sT`) لأنه لا يحتاج Raw Sockets |
+| Running Nmap as root | Uses the fastest and most powerful techniques: **SYN Scan** (`-sS`) and **ARP** on the local network |
+| Running Nmap without root | Falls back to **TCP Connect Scan** (`-sT`) because it doesn't need raw sockets |
 
-### 0.4 مفاهيم الشبكات الأساسية
+### 0.4 Core Networking Concepts
 
-#### (أ) طبقات TCP/IP
+#### (a) TCP/IP Layers
 
-| الطبقة | وظيفتها | أمثلة | أين يظهر في Nmap؟ |
+| Layer | Function | Examples | Where it shows up in Nmap |
 |---|---|---|---|
-| **Application** | بروتوكولات التطبيقات | HTTP, FTP, DNS, SSH | Service Detection و NSE |
-| **Transport** | توصيل البيانات بين تطبيقين عبر Ports | TCP, UDP | Port Scans |
-| **Internet** | العناوين والتوجيه (Routing) | IP, ICMP | ICMP Ping, Traceroute |
-| **Link** (Network Access) | التواصل داخل الشبكة المحلية بعناوين MAC | Ethernet, Wi-Fi, **ARP** | ARP Scan |
+| **Application** | Application-level protocols | HTTP, FTP, DNS, SSH | Service Detection and NSE |
+| **Transport** | Delivers data between two applications via Ports | TCP, UDP | Port Scans |
+| **Internet** | Addressing and routing | IP, ICMP | ICMP Ping, Traceroute |
+| **Link** (Network Access) | Communication within the local network via MAC addresses | Ethernet, Wi-Fi, **ARP** | ARP Scan |
 
-> **حفظ سريع:** ARP يعمل في طبقة **Link**. IP و ICMP في طبقة **Internet**. TCP و UDP في طبقة **Transport**.
+> **Quick memorization:** ARP works at the **Link** layer. IP and ICMP at the **Internet** layer. TCP and UDP at the **Transport** layer.
 
-#### (ب) بروتوكول ARP
+#### (b) The ARP Protocol
 
-الجهاز يعرف **IP** الهدف لكن لا يعرف **MAC**. فيرسل **ARP Request** (Broadcast) يقول: *"من يملك هذا الـ IP؟ أخبرني"*. الجهاز صاحب الـ IP يرد **ARP Reply** بعنوان الـ MAC. (هذا ما رأيته في الـ Lab الذي يسبق هذه الـ Rooms: `Who has router tell computer2`).
+A device knows the target's **IP** but not its **MAC**. So it sends an **ARP Request** (Broadcast) asking: *"Who has this IP? Tell me."* The device that owns that IP replies with an **ARP Reply** containing its MAC address. (This is exactly what you saw in the preceding lab: `Who has router tell computer2`).
 
-نقطتان مهمتان لـ Nmap:
-1. ARP لا يعمل إلا داخل **نفس الشبكة المحلية (Subnet)**، فهو لا يُوجَّه عبر الـ Router.
-2. لا يستطيع جهاز على الشبكة المحلية أن يتجاهل ARP بسهولة؛ لذلك هو أدق طريقة لاكتشاف الأجهزة المحلية، حتى لو كان الـ Firewall يحجب Ping.
+Two points that matter for Nmap:
+1. ARP only works within the **same local network (Subnet)** — it isn't routed through a Router.
+2. A device on the local network can't easily ignore ARP, which makes it the most accurate way to discover local hosts — even when a firewall blocks Ping.
 
-#### (ج) بروتوكول ICMP
+#### (c) The ICMP Protocol
 
-بروتوكول للرسائل التشخيصية. أشهر رسائله لنا:
+A protocol for diagnostic messages. The ones that matter most to us:
 
-| Type | الاسم | الاستخدام |
+| Type | Name | Use |
 |---|---|---|
-| 8 | Echo Request | هو الـ `ping` |
-| 0 | Echo Reply | رد الـ ping |
-| 13 / 14 | Timestamp Request / Reply | سؤال الجهاز عن وقته |
-| 17 / 18 | Address Mask Request / Reply | سؤال الجهاز عن الـ Subnet Mask |
-| 3 | Destination Unreachable | رسالة خطأ، منها **Port Unreachable** (Code 3) |
+| 8 | Echo Request | This is `ping` |
+| 0 | Echo Reply | The ping's response |
+| 13 / 14 | Timestamp Request / Reply | Asking a device for its clock time |
+| 17 / 18 | Address Mask Request / Reply | Asking a device for its Subnet Mask |
+| 3 | Destination Unreachable | An error message, including **Port Unreachable** (Code 3) |
 
-#### (د) بروتوكول TCP: المصافحة الثلاثية (3-Way Handshake)
+#### (d) TCP: The 3-Way Handshake
 
-TCP بروتوكول موثوق يبني اتصالًا قبل إرسال البيانات:
+TCP is a reliable protocol that establishes a connection before sending data:
 
 ```
    Client                              Server
-     |  ---------- SYN ------------->    |    "أريد أن أتصل"
-     |  <------- SYN + ACK ----------    |    "موافق، وأنا أيضًا أريد الاتصال"
-     |  ---------- ACK ------------->    |    "تم، الاتصال قائم"
+     |  ---------- SYN ------------->    |    "I want to connect"
+     |  <------- SYN + ACK ----------    |    "Agreed, and I want to connect too"
+     |  ---------- ACK ------------->    |    "Done, the connection is established"
 ```
 
-**أعلام TCP (Flags)** وهي أساس فهم كل أنواع الفحص:
+**TCP Flags** — the foundation for understanding every scan type:
 
-| Flag | معناه |
+| Flag | Meaning |
 |---|---|
-| **SYN** | بدء اتصال (Synchronize) |
-| **ACK** | تأكيد استلام (Acknowledge) |
-| **FIN** | إنهاء الاتصال بشكل طبيعي |
-| **RST** | قطع الاتصال فورًا / رفض (Reset) |
-| **PSH** | ادفع البيانات للتطبيق مباشرة (Push) |
-| **URG** | البيانات عاجلة (Urgent) |
+| **SYN** | Start a connection (Synchronize) |
+| **ACK** | Acknowledge receipt |
+| **FIN** | Gracefully end the connection |
+| **RST** | Abruptly terminate / reject (Reset) |
+| **PSH** | Push data straight to the application |
+| **URG** | The data is urgent |
 
-**القاعدة الذهبية لفهم الفحص:** عندما تُرسل SYN إلى Port:
-- مفتوح -> يرد `SYN/ACK`
-- مغلق -> يرد `RST`
-- يوجد Firewall يحجب -> لا يرد شيء، أو يرد رسالة ICMP خطأ
+**The golden rule for understanding scans:** when you send a SYN to a port:
+- Open -> replies `SYN/ACK`
+- Closed -> replies `RST`
+- A Firewall is blocking -> no reply, or an ICMP error message
 
-#### (هـ) بروتوكول UDP
+#### (e) The UDP Protocol
 
-UDP **بدون اتصال** (Connectionless): يرسل ولا ينتظر تأكيدًا. أسرع لكنه غير موثوق. يُستخدم في DNS و DHCP و SNMP و VoIP. هذا يجعل فحصه **أبطأ وأصعب** لأن المنفذ المفتوح غالبًا لا يرد شيئًا (سنشرح هذا في Room 2).
+UDP is **connectionless**: it sends without waiting for acknowledgment. Faster but unreliable. Used in DNS, DHCP, SNMP, and VoIP. This makes scanning it **slower and harder**, because an open port often doesn't reply at all (explained in Room 2).
 
-#### (و) المنافذ (Ports) الشائعة التي يجب أن تحفظها
+#### (f) Common Ports Worth Memorizing
 
-| Port | البروتوكول | الخدمة |
+| Port | Protocol | Service |
 |---|---|---|
 | 20/21 | TCP | FTP |
 | 22 | TCP | SSH |
 | 23 | TCP | Telnet |
 | 25 | TCP | SMTP |
-| 53 | UDP (و TCP) | DNS |
+| 53 | UDP (and TCP) | DNS |
 | 67/68 | UDP | DHCP |
 | 80 | TCP | HTTP |
 | 110 | TCP | POP3 |
@@ -175,110 +175,110 @@ UDP **بدون اتصال** (Connectionless): يرسل ولا ينتظر تأك�
 | 3306 | TCP | MySQL |
 | 3389 | TCP | RDP |
 
-عدد الـ Ports في كل بروتوكول **65,535** (من 1 إلى 65535). و Ports من 1 إلى 1023 تُسمى **Well-Known Ports**.
+There are **65,535** ports in each protocol (1 through 65535). Ports 1 through 1023 are called **Well-Known Ports**.
 
-### 0.5 كيف تقرأ مخرجات Nmap؟
+### 0.5 How to Read Nmap Output
 
-> المثال التالي توضيحي (ليس من الـ Lab):
+> The example below is illustrative (not from the Lab):
 
 ```
 $ sudo nmap -sS 10.10.10.5
 Nmap scan report for 10.10.10.5
-Host is up (0.00045s latency).              <-- (1) الجهاز شغّال
-Not shown: 996 closed tcp ports (reset)     <-- (2) ملخص الباقي
-PORT    STATE SERVICE                       <-- (3) الجدول الرئيسي
+Host is up (0.00045s latency).              <-- (1) the host is alive
+Not shown: 996 closed tcp ports (reset)     <-- (2) summary of the rest
+PORT    STATE SERVICE                       <-- (3) the main table
 22/tcp  open  ssh
 80/tcp  open  http
 139/tcp open  netbios-ssn
 445/tcp open  microsoft-ds
-MAC Address: 02:AB:CD:12:34:56 (Unknown)    <-- (4) يظهر فقط على الشبكة المحلية
+MAC Address: 02:AB:CD:12:34:56 (Unknown)    <-- (4) only shows on the local network
 Nmap done: 1 IP address (1 host up) scanned in 1.52 seconds
 ```
 
-1. **Host is up:** وصلنا رد من الجهاز. إن رأيت `Host seems down` فقد يكون الـ Firewall يحجب الـ Ping (الحل: الخيار `-Pn`).
-2. **Not shown:** الـ Ports التي لم تُعرض لأنها في حالة واحدة شائعة، وبجانبها السبب (`reset` يعني أن الجهاز رد بـ RST).
-3. **الأعمدة:** رقم المنفذ/البروتوكول، الحالة (STATE)، والخدمة المُخمّنة من رقم المنفذ (وليست مؤكدة إلا مع `-sV`).
-4. **MAC Address:** يظهر فقط حين يكون الهدف على نفس الشبكة المحلية.
+1. **Host is up:** we got a reply from the device. If you see `Host seems down`, the Firewall might be blocking Ping (fix: add `-Pn`).
+2. **Not shown:** ports that weren't individually listed because they share one common state, with the reason next to it (`reset` means the host replied with RST).
+3. **Columns:** the port/protocol number, its state (STATE), and the service guessed from the port number (not confirmed unless you use `-sV`).
+4. **MAC Address:** only appears when the target is on the same local network.
 
 ---
 <a id="room1"></a>
 
 ## 1) Room 1: Nmap Live Host Discovery
 
-**الهدف:** قبل فحص الـ Ports، نحتاج معرفة **أي الأجهزة شغّالة** على الشبكة. فحص 65 ألف Port على جهاز مطفأ مضيعة للوقت. هذا الـ Room يشرح 4 طرق لاكتشاف الأجهزة: **ARP, ICMP, TCP, UDP**.
+**Goal:** Before scanning ports, we need to know **which devices are actually up** on the network. Scanning 65,000 ports against a powered-off machine is a waste of time. This Room covers 4 methods of host discovery: **ARP, ICMP, TCP, UDP**.
 
-### 1.1 تحديد الأهداف (Enumerating Targets)
+### 1.1 Enumerating Targets
 
-#### حساب نطاقات CIDR
+#### Calculating CIDR Ranges
 
-الـ CIDR `/N` يعني أن أول N بت ثابتة (Network) والباقي (32 - N) متغيرة (Hosts).
+CIDR `/N` means the first N bits are fixed (Network) and the rest (32 - N) are variable (Hosts).
 
-| CIDR | Subnet Mask | عدد العناوين |
+| CIDR | Subnet Mask | Number of Addresses |
 |---|---|---|
 | /8 | 255.0.0.0 | 16,777,216 |
 | /16 | 255.255.0.0 | 65,536 |
 | /24 | 255.255.255.0 | 256 |
 | /29 | 255.255.255.248 | 8 |
-| /32 | 255.255.255.255 | 1 (جهاز واحد) |
+| /32 | 255.255.255.255 | 1 (single host) |
 
-القانون: **عدد العناوين = 2 ^ (32 - N)**.
+Rule: **Number of addresses = 2 ^ (32 - N)**.
 
-#### طرق كتابة الأهداف في Nmap
+#### Ways to Write Targets in Nmap
 
-| الصيغة | مثال | المعنى |
+| Format | Example | Meaning |
 |---|---|---|
-| جهاز واحد | `nmap 10.10.10.5` | |
-| Hostname | `nmap example.com` | يحوّله لـ IP عبر DNS |
-| مدى (Range) | `nmap 10.10.10.10-20` | من .10 إلى .20 |
-| مدى متعدد | `nmap 10.10.0-255.101-125` | أكتر من Octet |
-| CIDR | `nmap 10.10.10.0/24` | شبكة كاملة |
-| ملف | `nmap -iL list.txt` | كل سطر هدف |
-| استثناء | `nmap 10.10.10.0/24 --exclude 10.10.10.1` | |
+| Single host | `nmap 10.10.10.5` | |
+| Hostname | `nmap example.com` | resolved to an IP via DNS |
+| Range | `nmap 10.10.10.10-20` | from .10 to .20 |
+| Multi-octet range | `nmap 10.10.0-255.101-125` | more than one octet |
+| CIDR | `nmap 10.10.10.0/24` | a whole network |
+| File | `nmap -iL list.txt` | each line is a target |
+| Exclusion | `nmap 10.10.10.0/24 --exclude 10.10.10.1` | |
 
-#### الخيار `-sL` (List Scan): أفضل صديق للحسابات
+#### The `-sL` Option (List Scan): Your Best Friend for Math
 
-يعرض الأهداف **بدون إرسال أي حزمة للأجهزة نفسها**. يفيدك للتأكد من النطاق قبل الفحص الفعلي (ويحاول عمل Reverse DNS إلا إذا أضفت `-n`).
+Displays the targets **without sending any packet to the hosts themselves**. Useful for double-checking your range before the real scan (and it attempts Reverse DNS unless you add `-n`).
 
 ```bash
 nmap -sL -n 10.10.12.13/29
 ```
 
-### 1.2 الأنواع الأربعة لاكتشاف الأجهزة
+### 1.2 The Four Types of Host Discovery
 
-الخيار `-sn` معناه: **"لا تفحص الـ Ports"** (Host Discovery فقط). كان اسمه قديمًا "Ping Scan". نستخدمه مع خيارات النوع.
+The `-sn` option means: **"don't scan ports"** (Host Discovery only). It used to be called "Ping Scan." We combine it with type-selecting options.
 
-> **السلوك الافتراضي لـ Nmap عند اكتشاف الأجهزة:**
-> - **أنت root + الهدف على نفس الشبكة المحلية:** يستخدم **ARP**.
-> - **أنت root + الهدف في شبكة بعيدة:** يرسل ICMP Echo + TCP SYN إلى 443 + TCP ACK إلى 80 + ICMP Timestamp.
-> - **بدون root:** يحاول TCP Connect على المنفذين 80 و 443.
+> **Nmap's default host discovery behavior:**
+> - **You're root + target is on the local network:** uses **ARP**.
+> - **You're root + target is on a remote network:** sends ICMP Echo + TCP SYN to 443 + TCP ACK to 80 + ICMP Timestamp.
+> - **No root:** tries TCP Connect to ports 80 and 443.
 
-#### النوع 1: ARP Scan (الخيار `-PR`)
+#### Type 1: ARP Scan (Option `-PR`)
 
 ```bash
 sudo nmap -PR -sn 192.168.0.0/24
 ```
 
-- **الأدق** على الشبكة المحلية، لأنه لا يمكن تجاهله بسهولة، حتى لو كان الجهاز يحجب Ping.
-- يحتاج **root**.
-- **لا يعمل خارج الـ Subnet** لأن ARP لا يُوجَّه عبر الـ Routers.
-- أداة مكملة: `arp-scan`.
+- **Most accurate** on the local network, because it's hard to ignore even if a device blocks Ping.
+- Needs **root**.
+- **Does not work outside the Subnet** since ARP isn't routed across networks.
+- Complementary tool: `arp-scan`.
 
 ```bash
-sudo arp-scan -l                 # فحص الشبكة المحلية للـ interface الافتراضي
+sudo arp-scan -l                 # scan local network on default interface
 sudo arp-scan --localnet
-sudo arp-scan -I eth0 -l         # تحديد الـ interface
-sudo arp-scan -l | less          # للمراجعة
+sudo arp-scan -I eth0 -l         # specify the interface
+sudo arp-scan -l | less          # for reviewing
 ```
 
-#### النوع 2: ICMP Scan
+#### Type 2: ICMP Scan
 
-ثلاث طرق:
+Three variants:
 
-| الخيار | نوع الرسالة | ملاحظات |
+| Option | Message Type | Notes |
 |---|---|---|
-| `-PE` | **Echo Request** (Type 8) | هو الـ ping التقليدي. غالبًا محجوب في الـ Firewalls |
-| `-PP` | **Timestamp Request** (Type 13) | قد يمر حين يُحجب Echo |
-| `-PM` | **Address Mask Request** (Type 17) | قد يمر حين يُحجب Echo |
+| `-PE` | **Echo Request** (Type 8) | the classic ping. Often blocked by firewalls |
+| `-PP` | **Timestamp Request** (Type 13) | may get through when Echo is blocked |
+| `-PM` | **Address Mask Request** (Type 17) | may get through when Echo is blocked |
 
 ```bash
 sudo nmap -PE -sn 10.10.10.0/24          # Echo
@@ -286,523 +286,523 @@ sudo nmap -PP -sn 10.10.10.0/24          # Timestamp
 sudo nmap -PM -sn 10.10.10.0/24          # Address Mask
 ```
 
-> **ملاحظة:** حتى لو لم تكن الشبكة ترد على Echo، جرّب Timestamp و Address Mask، فقد يكون الأدمن نسي حجبهما.
+> **Note:** even if a network doesn't reply to Echo, try Timestamp and Address Mask — the admin may have forgotten to block them.
 
-#### النوع 3: TCP Ping
+#### Type 3: TCP Ping
 
-| الخيار | ما يُرسل | الاستنتاج | يحتاج root؟ |
+| Option | What's Sent | What It Tells You | Needs root? |
 |---|---|---|---|
-| `-PS[ports]` | **SYN** | رد `SYN/ACK` أو `RST` = الجهاز شغّال | **لا** (يستخدم connect()) |
-| `-PA[ports]` | **ACK** | رد `RST` = الجهاز شغّال | **نعم** |
+| `-PS[ports]` | **SYN** | a reply of `SYN/ACK` or `RST` = host is up | **No** (uses connect()) |
+| `-PA[ports]` | **ACK** | a reply of `RST` = host is up | **Yes** |
 
 ```bash
-sudo nmap -PS -sn 10.10.10.0/24            # SYN إلى Port 80 (الافتراضي)
-sudo nmap -PS23 -sn 10.10.10.0/24          # SYN إلى Port 23 (Telnet)
+sudo nmap -PS -sn 10.10.10.0/24            # SYN to Port 80 (default)
+sudo nmap -PS23 -sn 10.10.10.0/24          # SYN to Port 23 (Telnet)
 sudo nmap -PS21-25,80,443 -sn 10.10.10.0/24
-sudo nmap -PA -sn 10.10.10.0/24            # ACK إلى Port 80
+sudo nmap -PA -sn 10.10.10.0/24            # ACK to Port 80
 ```
 
-**كيف يعمل؟** سواء كان الـ Port مفتوحًا أو مغلقًا، الجهاز *سيرد بشيء* (SYN/ACK أو RST). وأي رد يثبت أنه حيّ. الـ ACK Ping يخدع Firewalls التي تحجب SYN فقط، لأن حزمة ACK تبدو كجزء من اتصال قائم، فيرد الجهاز بـ RST.
+**How does it work?** Whether the port is open or closed, the host *will reply with something* (SYN/ACK or RST). Either reply proves it's alive. ACK Ping can trick firewalls that only block SYN packets, because an ACK packet looks like part of an existing connection, prompting the host to reply with RST.
 
-#### النوع 4: UDP Ping (الخيار `-PU`)
+#### Type 4: UDP Ping (Option `-PU`)
 
 ```bash
 sudo nmap -PU -sn 10.10.10.0/24
 sudo nmap -PU53 -sn 10.10.10.0/24
 ```
 
-- يرسل حزمة UDP إلى Port (غالبًا مغلق).
-- إن كان الجهاز حيًّا يرد **ICMP Port Unreachable**، وهذا يثبت أنه شغّال.
-- إن لم يرد شيء، لا نعرف (قد يكون مطفأ أو يحجب).
+- Sends a UDP packet to a port (usually closed).
+- If the host is alive, it replies with an **ICMP Port Unreachable**, proving it's up.
+- If nothing comes back, we don't know (could be down or blocking it).
 
-#### أداة masscan (للسرعة العالية)
+#### The masscan Tool (for high-speed scanning)
 
 ```bash
 masscan 10.0.0.0/8 -p443 --rate 1000
 ```
 
-أسرع من Nmap بكثير لأنها تستخدم TCP/IP stack خاص بها، لكنها أقل دقة وأقل مميزات. تُستخدم لمسح نطاقات ضخمة. **استخدمها فقط على أهداف مسموح بها**.
+Much faster than Nmap because it uses its own TCP/IP stack, but less accurate and with fewer features. Used for scanning huge ranges. **Only use it against authorized targets.**
 
-### 1.3 DNS: خيارات `-R` و `-n`
+### 1.3 DNS: the `-R` and `-n` Options
 
-Nmap يحاول افتراضيًا عمل **Reverse DNS** للأجهزة الشغّالة فقط (IP -> Hostname) لأن الأسماء تكشف معلومات (مثل `db-server`, `dc01`).
+By default Nmap tries **Reverse DNS** only on hosts that respond (IP -> Hostname), because names leak info (like `db-server`, `dc01`).
 
-| الخيار | الوظيفة |
+| Option | Function |
 |---|---|
-| `-n` | **لا** تعمل DNS lookup أبدًا (أسرع وأهدأ) |
-| `-R` | اعمل Reverse DNS **لكل** الـ IPs حتى التي تبدو مطفأة |
-| `--dns-servers 8.8.8.8` | استخدام DNS Server محدد |
+| `-n` | **Never** do DNS lookups (faster and quieter) |
+| `-R` | Do Reverse DNS on **every** IP, even those that appear down |
+| `--dns-servers 8.8.8.8` | Use a specific DNS server |
 
-### 1.4 منظور المهاجم والمدافع
+### 1.4 Attacker and Defender Perspective
 
-| | المهاجم (Red Team) | المدافع (Blue Team) |
+| | Attacker (Red Team) | Defender (Blue Team) |
 |---|---|---|
-| **ما يفعله** | يبدأ بـ ARP على الشبكة المحلية لأنه الأدق. ويجرّب أكثر من نوع حين يُحجب ICMP | يراقب موجات ARP الكثيفة (أدوات مثل `arpwatch`) وحزم SYN/ICMP المتتالية على نطاق واسع |
-| **نقطة الضعف / القوة** | ARP صوته عالٍ على الشبكة المحلية | حجب Echo وحده لا يكفي، يجب مراقبة Timestamp و Address Mask أيضًا |
+| **What they do** | Start with ARP on the local network since it's the most accurate. Try multiple types when ICMP is blocked | Watch for heavy ARP traffic (tools like `arpwatch`) and bursts of SYN/ICMP across a wide range |
+| **Weakness / Strength** | ARP is "loud" on the local network | Blocking Echo alone isn't enough — must also monitor Timestamp and Address Mask |
 
-### 1.5 ملخص خيارات الـ Room
+### 1.5 Room Options Summary
 
-| الخيار | الوظيفة |
+| Option | Function |
 |---|---|
-| `-sL` | اعرض الأهداف فقط (بدون فحص) |
-| `-sn` | اكتشاف الأجهزة فقط (بدون فحص Ports) |
+| `-sL` | Show targets only (no scanning) |
+| `-sn` | Host discovery only (no port scan) |
 | `-PR` | ARP Scan |
 | `-PE` / `-PP` / `-PM` | ICMP: Echo / Timestamp / Address Mask |
 | `-PS` / `-PA` | TCP SYN Ping / TCP ACK Ping |
 | `-PU` | UDP Ping |
-| `-n` / `-R` | بدون DNS / DNS لكل الأجهزة |
-| `-Pn` | تخطّي الاكتشاف واعتبر كل الأجهزة شغّالة |
+| `-n` / `-R` | No DNS / DNS for all hosts |
+| `-Pn` | Skip discovery and treat every host as up |
 
-### 1.6 حل أسئلة الـ Room 1
+### 1.6 Answered Questions — Room 1
 
-#### الأسئلة النظرية (إجاباتها ثابتة)
+#### Theory Questions (fixed answers)
 
-| السؤال | الإجابة | التفسير |
+| Question | Answer | Explanation |
 |---|---|---|
-| ما أول IP يفحصه Nmap إذا كان الهدف `10.10.12.13/29`؟ | **10.10.12.8** | /29 = 8 عناوين، الكتلة التي تضم .13 هي من .8 إلى .15، وأولها .8 |
-| كم IP سيفحص Nmap للنطاق `10.10.0-255.101-125`؟ | **6400** | (256) × (25) = 6400 |
-| خيار ARP Scan | `-PR` (مع `-sn`) | |
-| خيار ICMP Echo | `-PE` | |
-| خيار ICMP Timestamp | `-PP` | |
-| خيار ICMP Address Mask | `-PM` | |
-| خيار TCP SYN Ping | `-PS` | |
-| خيار TCP ACK Ping | `-PA` | |
-| خيار UDP Ping | `-PU` | |
-| لعمل TCP SYN Ping على منفذ Telnet | `-PS23` | Telnet = Port 23 |
-| أي TCP Ping **لا** يحتاج صلاحيات root؟ | **TCP SYN Ping** | |
-| أي TCP Ping يحتاج صلاحيات root؟ | **TCP ACK Ping** | |
-| أداة الفحص الأسرع المذكورة | **masscan** | |
-| خيار عمل Reverse DNS لكل الأجهزة | `-R` | |
-| خيار منع DNS lookup | `-n` | |
-| ARP في أي طبقة TCP/IP؟ | **Link** | |
-| ICMP و IP في أي طبقة؟ | **Internet** | |
-| TCP و UDP في أي طبقة؟ | **Transport** | |
+| What's the first IP Nmap scans for target `10.10.12.13/29`? | **10.10.12.8** | /29 = 8 addresses; the block containing .13 is .8 to .15, and the first is .8 |
+| How many IPs will Nmap scan for `10.10.0-255.101-125`? | **6400** | (256) × (25) = 6400 |
+| ARP Scan option | `-PR` (with `-sn`) | |
+| ICMP Echo option | `-PE` | |
+| ICMP Timestamp option | `-PP` | |
+| ICMP Address Mask option | `-PM` | |
+| TCP SYN Ping option | `-PS` | |
+| TCP ACK Ping option | `-PA` | |
+| UDP Ping option | `-PU` | |
+| TCP SYN Ping against the Telnet port | `-PS23` | Telnet = Port 23 |
+| Which TCP Ping does **not** need root? | **TCP SYN Ping** | |
+| Which TCP Ping needs root? | **TCP ACK Ping** | |
+| The fastest scanning tool mentioned | **masscan** | |
+| Option for Reverse DNS on every host | `-R` | |
+| Option to disable DNS lookups | `-n` | |
+| Which TCP/IP layer is ARP in? | **Link** | |
+| Which layer are ICMP and IP in? | **Internet** | |
+| Which layer are TCP and UDP in? | **Transport** | |
 
-**طريقة التحقق بنفسك من الحسابين الأولين:**
+**How to verify the first two calculations yourself:**
 
 ```bash
-nmap -sL -n 10.10.12.13/29 | head -n 3                # أول IP
-nmap -sL -n 10.10.0-255.101-125 | tail -n 1           # آخر سطر: "Nmap done: 6400 IP addresses"
+nmap -sL -n 10.10.12.13/29 | head -n 3                # first IP
+nmap -sL -n 10.10.0-255.101-125 | tail -n 1           # last line: "Nmap done: 6400 IP addresses"
 ```
 
-#### الأسئلة العملية (تعتمد على الـ Lab الخاص بك)
+#### Practical Questions (depend on your own Lab)
 
-| ما يطلبه السؤال | الأمر | كيف تستخرج الإجابة |
+| What the question asks | Command | How to read the answer |
 |---|---|---|
-| عدد الأجهزة التي تردّ على ARP | `sudo nmap -PR -sn MACHINE_IP/24` | آخر سطر: `Nmap done: 256 IP addresses (N hosts up)` |
-| عدد الأجهزة التي تردّ على ICMP Echo | `sudo nmap -PE -sn MACHINE_IP/24` | نفس الطريقة |
-| عدد الأجهزة التي تردّ على ICMP Timestamp | `sudo nmap -PP -sn MACHINE_IP/24` | نفس الطريقة |
-| عدد الأجهزة التي تردّ على TCP SYN / ACK | `sudo nmap -PS -sn ...` و `-PA` | نفس الطريقة |
-| عدد الأجهزة في Subnet معيّن | `sudo nmap -sn SUBNET/24` | نفس الطريقة |
-| اسم الـ Hostname المعاد من DNS | `nmap -R -sn MACHINE_IP/24` | يظهر بجانب الـ IP |
+| Number of hosts replying to ARP | `sudo nmap -PR -sn MACHINE_IP/24` | last line: `Nmap done: 256 IP addresses (N hosts up)` |
+| Number of hosts replying to ICMP Echo | `sudo nmap -PE -sn MACHINE_IP/24` | same approach |
+| Number of hosts replying to ICMP Timestamp | `sudo nmap -PP -sn MACHINE_IP/24` | same approach |
+| Number of hosts replying to TCP SYN / ACK | `sudo nmap -PS -sn ...` and `-PA` | same approach |
+| Number of hosts in a given subnet | `sudo nmap -sn SUBNET/24` | same approach |
+| Hostname returned from DNS | `nmap -R -sn MACHINE_IP/24` | shown next to the IP |
 
-> **ملاحظة:** حين يطلب السؤال عدد الأجهزة، اقرأ عبارة `(N hosts up)`. وإن اختلفت نتيجتك بين الأنواع، فهذا طبيعي: كل Firewall يحجب نوعًا مختلفًا.
+> **Note:** when a question asks for the number of hosts, read the `(N hosts up)` phrase. If your result differs between types, that's normal — each firewall blocks a different type.
 
 ---
 <a id="room2"></a>
 
 ## 2) Room 2: Nmap Basic Port Scans
 
-**الهدف:** بعد معرفة الأجهزة الحيّة، نكتشف **أي Ports مفتوحة** وما يعنيه ذلك. هنا نتعلّم الفحوصات الأساسية الثلاثة: **TCP Connect, TCP SYN, UDP**، ثم كيف نتحكم بنطاق الفحص وسرعته.
+**Goal:** Once we know which hosts are alive, we find out **which ports are open** and what that means. Here we learn the three basic scan types: **TCP Connect, TCP SYN, UDP**, then how to control scan scope and speed.
 
-### 2.1 حالات الـ Port الست (Port States)
+### 2.1 The Six Port States
 
-هذا أهم جدول في الـ Room كله. Nmap يصنّف كل Port في واحدة من **6 حالات**:
+This is the single most important table in the whole Room. Nmap classifies every port into one of **6 states**:
 
-| الحالة | المعنى | ماذا حدث؟ |
+| State | Meaning | What happened? |
 |---|---|---|
-| **open** | يوجد خدمة تستمع وتقبل الاتصال | وصل رد إيجابي (مثل SYN/ACK) |
-| **closed** | الـ Port يستجيب لكن لا توجد خدمة | وصل رد `RST` |
-| **filtered** | Nmap لا يعرف، لأن شيئًا (Firewall) يمنع وصول الحزم | لا رد، أو ICMP error |
-| **unfiltered** | الـ Port يمكن الوصول إليه لكن Nmap لا يعرف هل هو مفتوح أم مغلق | يظهر في فحص ACK فقط |
-| **open\|filtered** | Nmap لا يستطيع التفريق بين مفتوح ومحجوب | لا رد (شائع في UDP و Null/FIN/Xmas) |
-| **closed\|filtered** | لا يستطيع التفريق بين مغلق ومحجوب | نادر (يظهر في Idle Scan) |
+| **open** | A service is listening and accepting connections | A positive reply arrived (e.g., SYN/ACK) |
+| **closed** | The port responds but no service is listening | A `RST` arrived |
+| **filtered** | Nmap can't tell, because something (a Firewall) is blocking the packets | No reply, or an ICMP error |
+| **unfiltered** | The port is reachable but Nmap can't tell if it's open or closed | Only shows up in an ACK scan |
+| **open\|filtered** | Nmap can't distinguish between open and blocked | No reply (common with UDP and Null/FIN/Xmas scans) |
+| **closed\|filtered** | Can't distinguish between closed and blocked | Rare (shows up in Idle Scan) |
 
-> **تذكّر:** `closed` ليست مشكلة بل معلومة: *الجهاز حيّ وبلا Firewall على هذا الـ Port*. أما `filtered` فهي الإشارة الأولى لوجود Firewall.
+> **Remember:** `closed` isn't a problem — it's information: *the host is alive with no firewall on that port*. `filtered` is the first sign a firewall is present.
 
-### 2.2 TCP Connect Scan (الخيار `-sT`)
+### 2.2 TCP Connect Scan (Option `-sT`)
 
 ```bash
 nmap -sT 10.10.10.5
 ```
 
-**كيف يعمل:** يُكمل الـ 3-Way Handshake **كاملًا** ثم يقطع الاتصال، تمامًا كما يفعل أي برنامج عادي.
+**How it works:** completes the full **3-Way Handshake**, then tears down the connection — exactly like any regular application would.
 
 ```
- المنفذ مفتوح                         المنفذ مغلق
+ Open Port                             Closed Port
   Nmap --SYN--------> Target           Nmap --SYN--------> Target
   Nmap <--SYN/ACK---- Target           Nmap <--RST-------- Target
-  Nmap --ACK--------> Target           (الحالة: closed)
+  Nmap --ACK--------> Target           (state: closed)
   Nmap --RST/ACK ---> Target
-  (الحالة: open)
+  (state: open)
 ```
 
-| المميزات | العيوب |
+| Pros | Cons |
 |---|---|
-| لا يحتاج root | **صاخب:** تسجّله الخدمة في الـ Logs (لأن الاتصال اكتمل) |
-| يعمل في أي مكان | أبطأ من SYN Scan |
+| No root required | **Noisy:** the service logs it (since the connection completed) |
+| Works everywhere | Slower than SYN Scan |
 
-### 2.3 TCP SYN Scan (الخيار `-sS`) — "Half-Open" أو "Stealth Scan"
+### 2.3 TCP SYN Scan (Option `-sS`) — "Half-Open" or "Stealth Scan"
 
 ```bash
 sudo nmap -sS 10.10.10.5
 ```
 
-**كيف يعمل:** يرسل SYN فقط. فإن رد الهدف بـ SYN/ACK، يقطع Nmap الاتصال فورًا بـ `RST` **قبل** إكمال المصافحة.
+**How it works:** sends only SYN. If the target replies with SYN/ACK, Nmap immediately kills the connection with `RST` **before** completing the handshake.
 
 ```
- المنفذ مفتوح                         المنفذ مغلق                    محجوب
+ Open Port                             Closed Port                   Blocked
   Nmap --SYN--------> Target           Nmap --SYN--------> Target     Nmap --SYN--> (Firewall)
-  Nmap <--SYN/ACK---- Target           Nmap <--RST-------- Target     (لا رد)
+  Nmap <--SYN/ACK---- Target           Nmap <--RST-------- Target     (no reply)
   Nmap --RST--------> Target           (closed)                       (filtered)
   (open)
 ```
 
-| المميزات | العيوب |
+| Pros | Cons |
 |---|---|
-| **أسرع** من Connect | يحتاج root (Raw Packets) |
-| **أخفى:** لا يكمل الاتصال فلا تسجله بعض التطبيقات | لا يختفي من الـ Firewalls و IDS الحديثة |
-| **الافتراضي** عند تشغيل Nmap بـ root | |
+| **Faster** than Connect | Needs root (Raw Packets) |
+| **Stealthier:** never finishes the connection, so some applications won't log it | Doesn't hide from modern Firewalls and IDS |
+| **Default** when running Nmap as root | |
 
-> **لماذا يُسمّى "Stealth"؟** لأن التطبيق لا يرى اتصالًا مكتملًا. اليوم الـ IDS و Firewalls تكتشفه بسهولة، فالتسمية تاريخية أكثر من كونها حقيقية.
+> **Why is it called "Stealth"?** Because the application layer never sees a completed connection. Today's IDS and firewalls detect it easily — the name is more historical than literally true anymore.
 
-### 2.4 UDP Scan (الخيار `-sU`)
+### 2.4 UDP Scan (Option `-sU`)
 
 ```bash
 sudo nmap -sU 10.10.10.5
-sudo nmap -sU --top-ports 20 10.10.10.5     # أسرع: أشهر 20 منفذًا فقط
+sudo nmap -sU --top-ports 20 10.10.10.5     # faster: only the top 20 ports
 ```
 
-**كيف يعمل:** يرسل حزمة UDP إلى الـ Port.
+**How it works:** sends a UDP packet to the port.
 
-| الرد | الحالة |
+| Reply | State |
 |---|---|
-| رد من الخدمة (UDP) | **open** |
-| لا رد إطلاقًا | **open\|filtered** (قد يكون مفتوحًا لا يرد، أو محجوبًا) |
+| A reply from the service (UDP) | **open** |
+| No reply at all | **open\|filtered** (could be open and silent, or blocked) |
 | **ICMP Port Unreachable** (Type 3, Code 3) | **closed** |
-| ICMP Unreachable أخرى (Codes 1, 2, 9, 10, 13) | **filtered** |
+| Other ICMP Unreachable codes (1, 2, 9, 10, 13) | **filtered** |
 
-**لماذا UDP بطيء؟** لأن Linux يحدّ معدل رسائل ICMP (حوالي 1 في الثانية)، فمعرفة الـ closed تأخذ وقتًا. وعدم الرد يجعل Nmap يعيد المحاولة. لذلك **لا تفحص كل 65535 UDP Port** بل استخدم `--top-ports`.
+**Why is UDP slow?** Because Linux rate-limits ICMP messages (roughly 1 per second), so determining `closed` takes time. Silence also triggers retransmissions. So **don't scan all 65535 UDP ports** — use `--top-ports`.
 
-> **نصيحة:** كثير من خدمات UDP لا ترد إلا على بيانات صحيحة. لذلك Nmap يرسل Payloads خاصة لبعض المنافذ المعروفة (مثل DNS و SNMP). ولذلك الفحص مع `-sV` أدق في UDP.
+> **Tip:** many UDP services only reply to valid data. That's why Nmap sends special payloads for well-known ports (like DNS and SNMP). Combining UDP scan with `-sV` gives better accuracy.
 
-**أهم خدمات UDP للبحث عنها في الـ CTF:** DNS (53), SNMP (161), TFTP (69), NTP (123), DHCP (67/68).
+**Top UDP services worth hunting for in CTFs:** DNS (53), SNMP (161), TFTP (69), NTP (123), DHCP (67/68).
 
-### 2.5 التحكم في نطاق الفحص (Scope)
+### 2.5 Controlling Scan Scope
 
-بدون تحديد، Nmap يفحص **أشهر 1000 Port** فقط (وليست الأرقام من 1 إلى 1000!).
+By default, Nmap scans only the **top 1000 most common ports** (not ports 1 through 1000!).
 
-| الخيار | الوظيفة |
+| Option | Function |
 |---|---|
-| `-p22` | Port واحد |
-| `-p22,80,443` | عدة Ports |
-| `-p1-1023` | مدى |
-| `-p-` | **كل** الـ 65535 Port |
-| `-F` | **Fast**: أشهر **100** Port |
-| `--top-ports 10` | أشهر N Port |
-| `-r` | بترتيب تصاعدي (بدل العشوائي) |
-| `--open` | اعرض المفتوح فقط |
+| `-p22` | single port |
+| `-p22,80,443` | multiple ports |
+| `-p1-1023` | a range |
+| `-p-` | **all** 65535 ports |
+| `-F` | **Fast**: top **100** ports |
+| `--top-ports 10` | top N ports |
+| `-r` | scan in sequential (not random) order |
+| `--open` | show only open ports |
 
 ```bash
-sudo nmap -sS -p- 10.10.10.5                 # كل الـ Ports (الأفضل في CTF)
+sudo nmap -sS -p- 10.10.10.5                 # all ports (best for CTFs)
 sudo nmap -sS -p22,80,443 10.10.10.5
 sudo nmap -sS --top-ports 10 10.10.10.5
 sudo nmap -F 10.10.10.5
 ```
 
-### 2.6 التحكم في السرعة (Timing and Performance)
+### 2.6 Controlling Speed (Timing and Performance)
 
-#### قوالب التوقيت `-T0` إلى `-T5`
+#### Timing Templates `-T0` to `-T5`
 
-| القالب | الاسم | الاستخدام |
+| Template | Name | Use case |
 |---|---|---|
-| `-T0` | **paranoid** | بطيء جدًا (انتظار دقائق بين كل حزمة)، للتهرب من IDS |
-| `-T1` | **sneaky** | بطيء، للتهرب |
-| `-T2` | **polite** | يخفف الحمل على الهدف |
-| `-T3` | **normal** | **الافتراضي** |
-| `-T4` | **aggressive** | سريع. **الأنسب** للـ CTF والشبكات الجيدة |
-| `-T5` | **insane** | الأسرع، لكنه قد يعطي نتائج خاطئة أو يُسقط الاتصال |
+| `-T0` | **paranoid** | extremely slow (minutes between packets), for evading IDS |
+| `-T1` | **sneaky** | slow, for evasion |
+| `-T2` | **polite** | reduces load on the target |
+| `-T3` | **normal** | **the default** |
+| `-T4` | **aggressive** | fast. **Best** for CTFs and healthy networks |
+| `-T5` | **insane** | fastest, but may give wrong results or drop connections |
 
-يمكن كتابتها بالاسم أو بالرقم: `-T4` أو `-T aggressive`.
+Can be written by name or number: `-T4` or `-T aggressive`.
 
-#### خيارات دقيقة
+#### Fine-grained Options
 
-| الخيار | الوظيفة |
+| Option | Function |
 |---|---|
-| `--min-rate 100` | أرسل **على الأقل** 100 حزمة/ثانية |
-| `--max-rate 50` | لا ترسل **أكثر** من 50 حزمة/ثانية |
-| `--min-parallelism 100` | عدد أدنى من الفحوصات المتزامنة |
-| `--max-parallelism 1` | فحص واحد في كل مرة (بطيء ولطيف) |
-| `--max-retries 1` | عدد إعادة المحاولات |
-| `--host-timeout 5m` | تخلَّ عن الجهاز بعد 5 دقائق |
+| `--min-rate 100` | send **at least** 100 packets/sec |
+| `--max-rate 50` | don't send **more than** 50 packets/sec |
+| `--min-parallelism 100` | minimum number of concurrent probes |
+| `--max-parallelism 1` | one probe at a time (slow and quiet) |
+| `--max-retries 1` | number of retries |
+| `--host-timeout 5m` | give up on a host after 5 minutes |
 
-> **نصيحة عملية:** `--min-rate 5000` مع `-p-` يختصر فحص كل الـ Ports من دقائق إلى ثوانٍ في الـ Labs. لكن في الشبكات الحقيقية قد يُسقط الحزم أو يُنبّه الـ IDS.
+> **Practical tip:** `--min-rate 5000` with `-p-` cuts scanning all ports from minutes to seconds in lab environments. But on real networks it may drop packets or trigger IDS alerts.
 
-### 2.7 منظور المهاجم والمدافع
+### 2.7 Attacker and Defender Perspective
 
-| | المهاجم | المدافع |
+| | Attacker | Defender |
 |---|---|---|
-| **اختيار النوع** | `-sS` الأسرع. `-sT` إذا لا يملك root. `-sU` لخدمات تُنسى مثل SNMP و TFTP | يرصد عدد كبير من SYN بدون ACK أو اتصالات Half-Open، وكثرة RST من مصدر واحد |
-| **الدفاع الأقوى** | | **Default Deny**: افتح فقط ما تحتاجه، وراقب الـ Logs. ولا تنسَ UDP! |
+| **Choosing a type** | `-sS` is the fastest. `-sT` if they don't have root. `-sU` for often-forgotten services like SNMP and TFTP | Watches for lots of SYN packets without an ACK, or half-open connections, and lots of RST from one source |
+| **Strongest defense** | | **Default Deny**: only open what you need, and monitor logs. And don't forget UDP! |
 
-### 2.8 حل أسئلة الـ Room 2
+### 2.8 Answered Questions — Room 2
 
-#### الأسئلة النظرية
+#### Theory Questions
 
-| السؤال | الإجابة |
+| Question | Answer |
 |---|---|
-| كم عدد حالات الـ Port التي يعرفها Nmap؟ | **6** (open, closed, filtered, unfiltered, open\|filtered, closed\|filtered) |
-| أي خدمة تستخدم UDP Port 53؟ | **DNS** |
-| أي خدمة تستخدم TCP Port 22؟ | **SSH** |
-| أي خدمة تستخدم TCP Port 80؟ | **HTTP** |
-| ما اسم الـ flag الذي يعني "Reset"؟ | **RST** |
-| ما الـ flag الذي يعني "Acknowledge"؟ | **ACK** |
-| ما الـ flag الذي يبدأ الاتصال؟ | **SYN** |
-| خيار TCP Connect Scan | `-sT` |
-| خيار TCP SYN Scan | `-sS` |
-| خيار UDP Scan | `-sU` |
-| أي فحص يحتاج root: `-sT` أم `-sS`؟ | `-sS` (يحتاج Raw Packets) |
-| ما الرد المتوقع من Port TCP مغلق على SYN؟ | **RST** (غالبًا RST/ACK) |
-| ما الرد المتوقع من UDP Port مغلق؟ | **ICMP Port Unreachable** |
-| خيار فحص أشهر 100 Port | `-F` |
-| خيار فحص كل الـ Ports | `-p-` |
-| خيار فحص أشهر 10 Ports | `--top-ports 10` |
-| قالب `-T4` | **aggressive** |
-| قالب `-T5` | **insane** |
-| قالب `-T0` | **paranoid** |
-| خيار تحديد أقل معدل إرسال | `--min-rate` |
-| خيار تحديد أعلى معدل إرسال | `--max-rate` |
+| How many port states does Nmap recognize? | **6** (open, closed, filtered, unfiltered, open\|filtered, closed\|filtered) |
+| Which service uses UDP Port 53? | **DNS** |
+| Which service uses TCP Port 22? | **SSH** |
+| Which service uses TCP Port 80? | **HTTP** |
+| What's the flag name meaning "Reset"? | **RST** |
+| What's the flag meaning "Acknowledge"? | **ACK** |
+| What's the flag that starts a connection? | **SYN** |
+| TCP Connect Scan option | `-sT` |
+| TCP SYN Scan option | `-sS` |
+| UDP Scan option | `-sU` |
+| Which needs root: `-sT` or `-sS`? | `-sS` (needs Raw Packets) |
+| Expected reply from a closed TCP port on SYN? | **RST** (usually RST/ACK) |
+| Expected reply from a closed UDP port? | **ICMP Port Unreachable** |
+| Option to scan the top 100 ports | `-F` |
+| Option to scan all ports | `-p-` |
+| Option to scan the top 10 ports | `--top-ports 10` |
+| `-T4` template name | **aggressive** |
+| `-T5` template name | **insane** |
+| `-T0` template name | **paranoid** |
+| Option to set minimum send rate | `--min-rate` |
+| Option to set maximum send rate | `--max-rate` |
 
-#### الأسئلة العملية (تعتمد على الـ Lab الخاص بك)
+#### Practical Questions (depend on your own Lab)
 
-| ما يطلبه السؤال | الأمر | كيف تستخرج الإجابة |
+| What the question asks | Command | How to read the answer |
 |---|---|---|
-| أي Ports مفتوحة؟ | `sudo nmap -sS -p- --open MACHINE_IP` | اقرأ عمود `PORT` بحالة `open` |
-| أي Port مفتوح في مدى معين؟ | `sudo nmap -sS -p1-1023 MACHINE_IP` | |
-| ما الخدمة على Port معيّن؟ | `sudo nmap -sV -p PORT MACHINE_IP` | عمود `SERVICE` و `VERSION` |
-| هل ظهر Port في حالة filtered؟ | `sudo nmap -sS MACHINE_IP` | ابحث عن `filtered` |
-| UDP Ports مفتوحة | `sudo nmap -sU --top-ports 100 MACHINE_IP` | ابحث عن `open` (و `open\|filtered`) |
-| كم Port في حالة معيّنة؟ | | اقرأ السطر `Not shown: N ...` |
+| Which ports are open? | `sudo nmap -sS -p- --open MACHINE_IP` | read the `PORT` column where state is `open` |
+| Any open port in a given range? | `sudo nmap -sS -p1-1023 MACHINE_IP` | |
+| What's the service on a given port? | `sudo nmap -sV -p PORT MACHINE_IP` | `SERVICE` and `VERSION` columns |
+| Did a port show up as filtered? | `sudo nmap -sS MACHINE_IP` | look for `filtered` |
+| Open UDP ports | `sudo nmap -sU --top-ports 100 MACHINE_IP` | look for `open` (and `open\|filtered`) |
+| How many ports in a given state? | | read the `Not shown: N ...` line |
 
-**حيلة لمعرفة السبب:** أضف `--reason` لتعرف لماذا اعتبر Nmap الـ Port مفتوحًا أو مغلقًا (مثل `syn-ack` أو `reset`).
+**Trick to see the reasoning:** add `--reason` to see why Nmap considered a port open or closed (e.g., `syn-ack` or `reset`).
 
 ---
 <a id="room3"></a>
 
 ## 3) Room 3: Nmap Advanced Port Scans
 
-**الهدف:** فحوصات متقدمة تستغل تفاصيل دقيقة في RFC بروتوكول TCP للتهرب من بعض الـ Firewalls البسيطة (Stateless)، بالإضافة إلى تقنيات الـ Spoofing و Idle Scan.
+**Goal:** advanced scans that exploit subtle details in the TCP RFC to evade some simple (Stateless) firewalls, plus Spoofing and Idle Scan techniques.
 
-> **ملاحظة مهمة قبل البدء:** الفحوصات في هذا الـ Room (Null, FIN, Xmas) تعمل فقط ضد أنظمة تتبع RFC 793 بدقة. **أنظمة Windows و Cisco غالبًا لا تتبعها** وتردّ RST على كل شيء، فتظهر كل المنافذ "closed" حتى لو كانت مفتوحة. هذه الفحوصات تنجح أكثر ضد أنظمة Unix/Linux القديمة.
+> **Important note before starting:** the scans in this Room (Null, FIN, Xmas) only work reliably against systems that strictly follow RFC 793. **Windows and Cisco systems often don't follow it** and reply RST to everything, so every port looks "closed" even if it's open. These scans succeed more often against older Unix/Linux systems.
 
-### 3.1 القاعدة الذهبية وراء Null, FIN, Xmas
+### 3.1 The Golden Rule Behind Null, FIN, and Xmas
 
-هذه الفحوصات الثلاثة **لا ترسل SYN إطلاقًا**. بدلًا من ذلك ترسل حزمة "غريبة" لا تنتمي لاتصال قائم، وتعتمد على قاعدة من **RFC 793**:
+These three scans **never send a SYN at all**. Instead they send an "odd" packet that doesn't belong to any existing connection, relying on a rule from **RFC 793**:
 
-> إذا استقبل أي Port **مغلق** حزمة TCP بدون SYN أو ACK أو RST، يجب أن يرد بـ **RST**.
-> إذا كان الـ Port **مفتوحًا**، يتجاهل الحزمة الغريبة تمامًا (**لا رد**).
+> If a **closed** port receives a TCP packet without SYN, ACK, or RST set, it must reply with **RST**.
+> If the port is **open**, it silently ignores the odd packet (**no reply**).
 
-لذلك:
+So:
 
-| النتيجة | الحالة |
+| Result | State |
 |---|---|
-| وصل رد **RST** | **closed** |
-| **لا رد** | **open\|filtered** (لا يمكن التفريق بين مفتوح ومحجوب) |
+| A **RST** came back | **closed** |
+| **No reply** | **open\|filtered** (can't distinguish open from blocked) |
 
-### 3.2 Null Scan (الخيار `-sN`)
+### 3.2 Null Scan (Option `-sN`)
 
 ```bash
 sudo nmap -sN 10.10.10.5
 ```
 
-يرسل حزمة **بدون أي Flags على الإطلاق** (كل البتات = صفر).
+Sends a packet with **no flags set at all** (every bit = zero).
 
-### 3.3 FIN Scan (الخيار `-sF`)
+### 3.3 FIN Scan (Option `-sF`)
 
 ```bash
 sudo nmap -sF 10.10.10.5
 ```
 
-يرسل حزمة بها **FIN flag فقط**. الفكرة: FIN تعني "أنهِ الاتصال"، لكن لا يوجد اتصال قائم أصلًا، فمن المفترض أن يرد النظام بـ RST (إن كان ملتزمًا بالـ RFC).
+Sends a packet with **only the FIN flag** set. The idea: FIN means "end the connection," but there's no connection to begin with, so a compliant system should reply RST (if it strictly follows the RFC).
 
-### 3.4 Xmas Scan (الخيار `-sX`)
+### 3.4 Xmas Scan (Option `-sX`)
 
 ```bash
 sudo nmap -sX 10.10.10.5
 ```
 
-يرسل حزمة بها **FIN + PSH + URG** معًا. سُمّيت "Christmas" لأن الحزمة "تضيء" بكل الأعلام مثل شجرة الكريسماس المزينة بالأضواء.
+Sends a packet with **FIN + PSH + URG** all set together. Named "Christmas" because the packet "lights up" with every flag, like a Christmas tree covered in lights.
 
-**جدول مقارنة سريع:**
+**Quick comparison table:**
 
-| النوع | الخيار | الأعلام المُرسلة |
+| Type | Option | Flags Sent |
 |---|---|---|
-| Null | `-sN` | (لا شيء) |
+| Null | `-sN` | (none) |
 | FIN | `-sF` | FIN |
 | Xmas | `-sX` | FIN, PSH, URG |
 
-### 3.5 TCP Maimon Scan (الخيار `-sM`)
+### 3.5 TCP Maimon Scan (Option `-sM`)
 
 ```bash
 sudo nmap -sM 10.10.10.5
 ```
 
-يرسل **FIN/ACK** معًا. اكتشفه الباحث Uriel Maimon. في بعض أنظمة BSD القديمة، هذا يجعل الفارق واضحًا بين مفتوح ومغلق، لكنه اليوم نادرًا ما يكون مفيدًا ضد أنظمة حديثة.
+Sends **FIN/ACK** together. Discovered by researcher Uriel Maimon. On some old BSD systems this made the distinction between open and closed clear, but it's rarely useful against modern systems today.
 
-### 3.6 TCP ACK Scan (الخيار `-sA`) — ليس لاكتشاف "مفتوح/مغلق"!
+### 3.6 TCP ACK Scan (Option `-sA`) — Not for Detecting "Open/Closed"!
 
 ```bash
 sudo nmap -sA 10.10.10.5
 ```
 
-هذا الفحص **مختلف تمامًا** عن السابقين من حيث الغرض: هو **لا** يخبرك هل الـ Port مفتوح، بل يُستخدم لرسم خريطة قواعد الـ Firewall (**Firewall Rule Mapping**).
+This scan has a **completely different purpose** from the previous ones: it does **not** tell you whether a port is open — it's used to map out firewall rules (**Firewall Rule Mapping**).
 
-| الرد | الاستنتاج |
+| Reply | Conclusion |
 |---|---|
-| **RST** | **unfiltered** — الحزمة وصلت، لا يوجد Firewall يحجبها على هذا الـ Port (لكن لا نعرف مفتوح أم مغلق!) |
-| **لا رد / ICMP error** | **filtered** — يوجد شيء يحجب الحزمة |
+| **RST** | **unfiltered** — the packet got through, there's no firewall blocking this port (but we still don't know open vs. closed!) |
+| **No reply / ICMP error** | **filtered** — something is blocking the packet |
 
-**متى تستخدمه؟** لمعرفة هل الـ Firewall **Stateful** (يتتبع حالة الاتصال فيحجب ACK بدون SYN سابق) أم **Stateless** (يفلتر فقط على رقم الـ Port فيسمح لأي ACK بالمرور).
+**When to use it?** To determine whether a firewall is **Stateful** (tracks connection state, so it blocks an ACK with no prior SYN) or **Stateless** (only filters by port number, so it lets any ACK through).
 
-### 3.7 Custom Scan (الخيار `--scanflags`)
+### 3.7 Custom Scan (Option `--scanflags`)
 
 ```bash
 sudo nmap --scanflags SYNACK 10.10.10.5
 sudo nmap --scanflags SYNFINPSHURG 10.10.10.5
 ```
 
-يتيح لك **بناء تركيبة أعلام خاصة بك**، لتجربة سلوكيات Firewalls لا تغطيها الأنواع الجاهزة.
+Lets you **build your own custom combination of flags**, to test firewall behaviors not covered by the built-in scan types.
 
-### 3.8 Spoofing و Decoys (التمويه)
+### 3.8 Spoofing and Decoys
 
-#### IP Spoofing (الخيار `-S`)
+#### IP Spoofing (Option `-S`)
 
 ```bash
 sudo nmap -S SPOOFED_IP -e eth0 -Pn 10.10.10.5
 ```
 
-يزوّر عنوان الـ IP المصدر. **المشكلة:** الردود تذهب إلى الـ IP المزوَّر وليس إليك، فتفقد رؤية النتيجة إلا بـ Sniffing على شبكة تسمح بذلك (يُستخدم غالبًا للتعليم وليس عمليًا على الإنترنت).
+Forges the source IP address. **The problem:** replies go to the spoofed IP, not to you, so you lose visibility into the result unless you're sniffing on a network that allows it (mostly used for education rather than practical use against the internet).
 
-#### Decoys (الخيار `-D`)
+#### Decoys (Option `-D`)
 
 ```bash
 sudo nmap -D decoy1,decoy2,ME,decoy3 10.10.10.5
-sudo nmap -D RND:10 10.10.10.5          # 10 عناوين عشوائية
+sudo nmap -D RND:10 10.10.10.5          # 10 random addresses
 ```
 
-يُرسل الفحص الحقيقي مختلطًا بفحوصات وهمية تبدو قادمة من عناوين أخرى (Decoys)، فيصعب على الـ Firewall/IDS معرفة أيّ IP هو المصدر الحقيقي. `ME` تحدد مكان عنوانك الحقيقي بين القائمة.
+Sends the real scan mixed in with fake scans that appear to come from other addresses (Decoys), making it hard for a Firewall/IDS to identify which IP is the real source. `ME` marks where your real address sits in the list.
 
-#### MAC Spoofing (الخيار `--spoof-mac`)
+#### MAC Spoofing (Option `--spoof-mac`)
 
 ```bash
 sudo nmap --spoof-mac 00:11:22:33:44:55 10.10.10.5
-sudo nmap --spoof-mac Apple 10.10.10.5     # شركة عشوائية
-sudo nmap --spoof-mac 0 10.10.10.5         # عشوائي بالكامل
+sudo nmap --spoof-mac Apple 10.10.10.5     # a random vendor
+sudo nmap --spoof-mac 0 10.10.10.5         # fully random
 ```
 
-يغيّر عنوان الـ MAC المصدر (مفيد فقط على الشبكة المحلية، لأن MAC لا يعبر الـ Routers).
+Changes the source MAC address (only useful on the local network, since MAC doesn't cross Routers).
 
-#### Source Port Spoofing (الخيار `-g` أو `--source-port`)
+#### Source Port Spoofing (Option `-g` or `--source-port`)
 
 ```bash
 sudo nmap -g 53 10.10.10.5
 ```
 
-يجعل الفحص يبدو وكأنه قادم من Port معروف وموثوق (مثل 53 الخاص بـ DNS)، لخداع Firewalls بسيطة تثق بحركة مرور قادمة من هذا المنفذ.
+Makes the scan appear to come from a well-known, trusted port (like 53 for DNS), to fool simple firewalls that trust traffic coming from that port.
 
-### 3.9 Idle (Zombie) Scan — الخيار `--scanflags` ليس هنا، بل `-sI`
+### 3.9 Idle (Zombie) Scan — Option `-sI`
 
 ```bash
 sudo nmap -sI ZOMBIE_IP:PORT TARGET_IP
 ```
 
-أذكى تقنية في هذا الـ Room للاختفاء التام. تحتاج جهازًا ثالثًا "نائمًا" (**Zombie**) له **IPID تسلسلي يسهل التنبؤ به** ولا يُرسل حركة مرور خاصة به في تلك اللحظة.
+The cleverest technique in this Room for total stealth. It needs a third, "sleeping" device (**Zombie**) with a **predictable, sequential IPID** and no traffic of its own at that moment.
 
-**الفكرة بثلاث خطوات:**
+**The idea in three steps:**
 
 ```
-الخطوة 1: أرسل SYN/ACK إلى الـ Zombie، واحفظ رقم IPID الحالي في الرد (RST)
-          مهاجم --SYN/ACK--> Zombie
-          مهاجم <---RST------ Zombie   (IPID = X)
+Step 1: Send a SYN/ACK to the Zombie, record its current IPID from the reply (RST)
+          Attacker --SYN/ACK--> Zombie
+          Attacker <---RST------ Zombie   (IPID = X)
 
-الخطوة 2: ابعث حزمة SYN "مزوّرة" للهدف، تدّعي أنها من الـ Zombie
-          مهاجم --SYN (مصدر مزوّر = Zombie)--> Target
+Step 2: Send a "spoofed" SYN packet to the target, claiming it comes from the Zombie
+          Attacker --SYN (spoofed source = Zombie)--> Target
 
-الخطوة 3: أرسل SYN/ACK ثانية إلى الـ Zombie وقارن IPID الجديد
-          مهاجم --SYN/ACK--> Zombie
-          مهاجم <---RST------ Zombie   (IPID = ?)
+Step 3: Send another SYN/ACK to the Zombie and compare the new IPID
+          Attacker --SYN/ACK--> Zombie
+          Attacker <---RST------ Zombie   (IPID = ?)
 ```
 
-**التفسير:**
-- إن كان Port الهدف **مفتوحًا**: الهدف يرسل SYN/ACK إلى الـ Zombie (لأنه ظن أن الطلب جاء منه)، فيرد الـ Zombie تلقائيًا بـ RST، مما **يزيد IPID بمقدار 2** (حزمة واحدة إضافية أرسلها الـ Zombie).
-- إن كان Port الهدف **مغلقًا**: الهدف يرسل RST إلى الـ Zombie مباشرة، والـ Zombie **يتجاهله** (لا يرد على RST غير متوقع)، فـ IPID **يزيد بمقدار 1 فقط** (الزيادة الطبيعية من خطوتنا نحن).
+**The explanation:**
+- If the target's port is **open**: the target sends a SYN/ACK to the Zombie (since it thinks the request came from it), and the Zombie automatically replies with RST, which **increases the IPID by 2** (one extra packet the Zombie sent).
+- If the target's port is **closed**: the target sends RST directly to the Zombie, and the Zombie **ignores it** (it doesn't reply to an unsolicited RST), so the IPID **only increases by 1** (the natural increment from our own step).
 
-**لماذا هو قوي؟** لأن الهدف لا يرى عنوانك الحقيقي إطلاقًا، بل يرى فقط عنوان الـ Zombie. لكنه يحتاج Zombie مناسبًا (نظام قديم بـ Sequential IPID) وهذا نادر اليوم في الأنظمة الحديثة (تستخدم IPID عشوائي).
+**Why is it so powerful?** Because the target never sees your real address at all — only the Zombie's. But it needs a suitable Zombie (an old system with Sequential IPID), which is rare today in modern systems that use randomized IPID.
 
-### 3.10 منظور المهاجم والمدافع
+### 3.10 Attacker and Defender Perspective
 
-| | المهاجم | المدافع |
+| | Attacker | Defender |
 |---|---|---|
-| **Null/FIN/Xmas** | محاولة تجاوز Firewalls بسيطة Stateless | Firewall حديث **Stateful** يحجبها بسهولة بغض النظر عن الأعلام |
-| **ACK Scan** | لفهم بنية الـ Firewall قبل اختيار الأسلوب | راقب حزم ACK الواردة بدون اتصال SYN سابق لها |
-| **Decoys/Spoofing** | تشتيت الـ Logs وصعوبة الإسناد (Attribution) | قارن توقيت الحزم من كل الـ IPs — الحقيقي يكون متسقًا زمنيًا |
-| **Idle Scan** | إخفاء الهوية تمامًا خلف جهاز بريء | راقب أي جهاز يُستخدم كـ Zombie (طلبات SYN/ACK غير مبررة من IP غريب) |
+| **Null/FIN/Xmas** | Trying to bypass simple Stateless firewalls | A modern **Stateful** firewall blocks these regardless of flags |
+| **ACK Scan** | Used to understand firewall structure before choosing an approach | Watch for ACK packets arriving with no prior SYN connection |
+| **Decoys/Spoofing** | Spreads out logs and complicates attribution | Compare packet timing across all IPs — the real one tends to be consistent in timing |
+| **Idle Scan** | Fully hides identity behind an innocent machine | Watch for any device being used as a Zombie (unprompted SYN/ACK traffic from a strange IP) |
 
-### 3.11 حل أسئلة الـ Room 3
+### 3.11 Answered Questions — Room 3
 
-#### الأسئلة النظرية
+#### Theory Questions
 
-| السؤال | الإجابة |
+| Question | Answer |
 |---|---|
-| خيار Null Scan | `-sN` |
-| خيار FIN Scan | `-sF` |
-| خيار Xmas Scan | `-sX` |
-| خيار Maimon Scan | `-sM` |
-| خيار ACK Scan | `-sA` |
-| ما الأعلام في Xmas Scan؟ | **FIN, PSH, URG** |
-| ما الأعلام في Null Scan؟ | **لا يوجد (صفر أعلام)** |
-| ما الرد المتوقع من Port مغلق في Null/FIN/Xmas (حسب RFC 793)؟ | **RST** |
-| ما الرد المتوقع من Port مفتوح في Null/FIN/Xmas؟ | **لا رد** (الحالة: open\|filtered) |
-| أي أنظمة تشغيل لا تتبع عادة RFC 793 فتفشل معها هذه الفحوصات؟ | **Windows** (وأجهزة Cisco الشبكية) |
-| ما غرض TCP ACK Scan الأساسي؟ | **رسم خريطة قواعد الـ Firewall (معرفة unfiltered/filtered)** وليس معرفة open/closed |
-| خيار بناء أعلام مخصصة | `--scanflags` |
-| خيار تزوير IP المصدر | `-S` |
-| خيار استخدام عناوين وهمية Decoys | `-D` |
-| خيار تحديد IPs عشوائية كـ Decoys | `-D RND:N` |
-| خيار تزوير عنوان MAC | `--spoof-mac` |
-| خيار تزوير Source Port | `-g` أو `--source-port` |
-| خيار Idle / Zombie Scan | `-sI` |
-| ما الحقل الذي تعتمد عليه تقنية Idle Scan لمعرفة النتيجة؟ | **IP Identification (IPID)** |
-| في Idle Scan، كم تزيد IPID للـ Zombie إذا كان Port الهدف مفتوحًا؟ | **2** |
-| في Idle Scan، كم تزيد IPID للـ Zombie إذا كان Port الهدف مغلقًا؟ | **1** |
-| ما الشرط الأساسي في جهاز الـ Zombie؟ | **IPID تسلسلي (Sequential/Incremental)** وخامل (لا يُرسل بيانات أخرى) |
+| Null Scan option | `-sN` |
+| FIN Scan option | `-sF` |
+| Xmas Scan option | `-sX` |
+| Maimon Scan option | `-sM` |
+| ACK Scan option | `-sA` |
+| What flags are in a Xmas Scan? | **FIN, PSH, URG** |
+| What flags are in a Null Scan? | **None (zero flags)** |
+| Expected reply from a closed port in Null/FIN/Xmas (per RFC 793)? | **RST** |
+| Expected reply from an open port in Null/FIN/Xmas? | **No reply** (state: open\|filtered) |
+| Which OS commonly doesn't follow RFC 793, breaking these scans? | **Windows** (and Cisco network devices) |
+| What's the main purpose of TCP ACK Scan? | **Mapping firewall rules (determining unfiltered/filtered)**, not open/closed |
+| Option to build custom flags | `--scanflags` |
+| Option to spoof the source IP | `-S` |
+| Option to use fake Decoy addresses | `-D` |
+| Option to use random IPs as Decoys | `-D RND:N` |
+| Option to spoof the MAC address | `--spoof-mac` |
+| Option to spoof the Source Port | `-g` or `--source-port` |
+| Idle / Zombie Scan option | `-sI` |
+| Which field does Idle Scan rely on to determine the result? | **IP Identification (IPID)** |
+| In Idle Scan, how much does the Zombie's IPID increase if the target's port is open? | **2** |
+| In Idle Scan, how much does the Zombie's IPID increase if the target's port is closed? | **1** |
+| What's the essential requirement for the Zombie host? | **Sequential/Incremental IPID** and idle (not sending other traffic) |
 
-#### الأسئلة العملية (تعتمد على الـ Lab الخاص بك)
+#### Practical Questions (depend on your own Lab)
 
-| ما يطلبه السؤال | الأمر | كيف تستخرج الإجابة |
+| What the question asks | Command | How to read the answer |
 |---|---|---|
-| نتيجة Null Scan على الهدف | `sudo nmap -sN MACHINE_IP` | قارن بنتيجة `-sS` العادية؛ لاحظ الفارق بين `open\|filtered` و `closed` |
-| نتيجة Xmas Scan | `sudo nmap -sX MACHINE_IP` | نفس الطريقة |
-| نتيجة ACK Scan (filtered/unfiltered) | `sudo nmap -sA MACHINE_IP` | عمود STATE: `unfiltered` أو `filtered` |
-| هل يمكن تجاوز Firewall الـ Lab بـ FIN Scan؟ | قارن `nmap -sS` بـ `nmap -sF` على نفس المنفذ | إذا ظهر الـ Port "مفتوح/غير محجوب" في FIN وكان محجوبًا في SYN، فقد نجح التهرب |
+| Null Scan result on the target | `sudo nmap -sN MACHINE_IP` | compare it against a normal `-sS` result; note the difference between `open\|filtered` and `closed` |
+| Xmas Scan result | `sudo nmap -sX MACHINE_IP` | same approach |
+| ACK Scan result (filtered/unfiltered) | `sudo nmap -sA MACHINE_IP` | STATE column: `unfiltered` or `filtered` |
+| Can the Lab's firewall be bypassed with FIN Scan? | compare `nmap -sS` to `nmap -sF` on the same port | if the port shows "open/not blocked" in FIN but was blocked in SYN, the evasion worked |
 
 ---
 <a id="room4"></a>
 
 ## 4) Room 4: Nmap Post Port Scans
 
-**الهدف:** بعد معرفة الـ Ports المفتوحة، نحتاج معلومات أعمق: ما الخدمة بالضبط؟ ما نظام التشغيل؟ هل توجد ثغرات معروفة؟ وكيف نحفظ كل هذا بشكل منظم؟
+**Goal:** now that we know which ports are open, we need deeper info: exactly which service, what OS, any known vulnerabilities, and how to save it all in an organized way.
 
-### 4.1 Service and Version Detection (الخيار `-sV`)
+### 4.1 Service and Version Detection (Option `-sV`)
 
 ```bash
 nmap -sV 10.10.10.5
-nmap -sV --version-intensity 9 10.10.10.5    # فحص أعمق وأبطأ (0-9)
-nmap -sV --version-light 10.10.10.5          # فحص سريع وخفيف (intensity منخفض)
-nmap -sV --version-all 10.10.10.5            # جرّب كل الاختبارات (شامل جدًا)
+nmap -sV --version-intensity 9 10.10.10.5    # deeper, slower probing (0-9)
+nmap -sV --version-light 10.10.10.5          # fast, light probing (low intensity)
+nmap -sV --version-all 10.10.10.5            # try every probe (very thorough)
 ```
 
-**كيف يعمل من الداخل؟** رقم الـ Port وحده لا يثبت الخدمة (قد يشغّل أحدهم SSH على Port 8080 مثلًا). فيرسل Nmap سلسلة من الـ **Probes** (استفسارات) ويقارن الردود بقاعدة بيانات ضخمة تسمى **`nmap-service-probes`**، ويحاول استخراج:
+**How does it work under the hood?** The port number alone isn't proof of the service (someone could run SSH on port 8080, for example). Nmap sends a series of **Probes** (queries) and compares the responses against a massive database called **`nmap-service-probes`**, trying to extract:
 
 ```
 PORT   STATE SERVICE VERSION
@@ -810,19 +810,19 @@ PORT   STATE SERVICE VERSION
 80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
 ```
 
-- اسم المنتج (Product)
-- رقم النسخة (Version) — **أهم معلومة** لربطها بثغرات معروفة (CVE)
-- نظام التشغيل الذي يستضيف الخدمة أحيانًا
+- Product name
+- Version number — the **most important detail** for linking to known vulnerabilities (CVEs)
+- Sometimes the host OS running the service
 
-### 4.2 OS Detection (الخيار `-O`)
+### 4.2 OS Detection (Option `-O`)
 
 ```bash
 sudo nmap -O 10.10.10.5
-sudo nmap -O --osscan-guess 10.10.10.5     # تخمين أقرب تطابق حتى لو غير مؤكد
-sudo nmap -O --osscan-limit 10.10.10.5     # فقط إذا وُجد Port مفتوح وPort مغلق واحد على الأقل
+sudo nmap -O --osscan-guess 10.10.10.5     # guess the closest match even if uncertain
+sudo nmap -O --osscan-limit 10.10.10.5     # only if at least one open and one closed port exist
 ```
 
-**كيف يعمل من الداخل؟** يحتاج **root**. يرسل مجموعة اختبارات على مستوى منخفض جدًا (TTL الافتراضي، ترتيب خيارات TCP، سلوك IPID، حجم نافذة TCP Window Size...) ويقارنها بقاعدة **`nmap-os-db`** التي تحتوي بصمات آلاف الأنظمة.
+**How does it work under the hood?** Requires **root**. Sends a set of very low-level tests (default TTL, TCP option ordering, IPID behavior, TCP Window Size...) and compares them against a database called **`nmap-os-db`** which holds fingerprints of thousands of systems.
 
 ```
 Running: Linux 5.X
@@ -831,200 +831,200 @@ OS details: Linux 5.0 - 5.4
 Network Distance: 2 hops
 ```
 
-> **تنبيه:** OS Detection يحتاج **port واحدًا مفتوحًا وآخر مغلقًا على الأقل** ليعمل بدقة، وإلا يعطي `OS detection performed. No exact OS matches...`.
+> **Warning:** OS Detection needs **at least one open port and one closed port** to work accurately; otherwise it returns `OS detection performed. No exact OS matches...`.
 
 ### 4.3 Nmap Scripting Engine (NSE)
 
-أقوى ميزة في Nmap — محرك سكربتات مكتوب بلغة **Lua** يوسّع قدرات الأداة من مجرد فاحص Ports إلى أداة Enumeration وحتى استغلال ثغرات بسيطة.
+The most powerful feature in Nmap — a scripting engine written in **Lua** that extends the tool from a simple port scanner into an enumeration tool, and even a basic exploitation tool.
 
-#### فئات السكربتات (Categories)
+#### Script Categories
 
-| الفئة | الوظيفة |
+| Category | Function |
 |---|---|
-| **auth** | اختبار المصادقة (محاولة تجاوزها) |
-| **broadcast** | اكتشاف أجهزة عبر Broadcast على الشبكة |
-| **brute** | هجمات Brute-force على بيانات الدخول |
-| **default** | المجموعة التي تعمل تلقائيًا مع `-sC` |
-| **discovery** | استخراج معلومات إضافية عن الهدف والشبكة |
-| **dos** | اختبار قابلية التعرّض لهجمات حجب الخدمة (احذر استخدامها!) |
-| **exploit** | محاولة استغلال ثغرات فعليًا |
-| **external** | يرسل بيانات لخدمات خارجية (مثل VirusTotal) |
-| **fuzzer** | إرسال بيانات عشوائية لاكتشاف أخطاء |
-| **intrusive** | قد تُسبب ضررًا أو تُكتشف — لا تُستخدم إلا بإذن صريح |
-| **malware** | الكشف عن وجود Backdoors أو Malware |
-| **safe** | آمنة ولا تؤثر على الهدف |
-| **version** | تساعد في اكتشاف النسخة |
-| **vuln** | البحث عن ثغرات معروفة والإبلاغ عنها |
+| **auth** | tests authentication mechanisms (trying to bypass them) |
+| **broadcast** | discovers devices via Broadcast on the network |
+| **brute** | brute-force attacks against credentials |
+| **default** | the set that runs automatically with `-sC` |
+| **discovery** | extracts extra information about the target and network |
+| **dos** | tests susceptibility to denial-of-service attacks (be careful!) |
+| **exploit** | attempts to actively exploit a vulnerability |
+| **external** | sends data to external services (e.g., VirusTotal) |
+| **fuzzer** | sends random data to discover bugs |
+| **intrusive** | may cause harm or get detected — only use with explicit authorization |
+| **malware** | detects Backdoors or Malware |
+| **safe** | safe and won't affect the target |
+| **version** | helps with version discovery |
+| **vuln** | searches for and reports known vulnerabilities |
 
-#### طرق التشغيل
+#### Ways to Run Them
 
 ```bash
-nmap -sC 10.10.10.5                          # السكربتات الافتراضية (default)
-nmap --script=default 10.10.10.5             # نفس تأثير -sC
-nmap --script=vuln 10.10.10.5                # فئة كاملة
-nmap --script=ftp-anon 10.10.10.5            # سكربت محدد بالاسم
-nmap --script=ftp-anon,http-title 10.10.10.5 # عدة سكربتات
-nmap --script="http-*" 10.10.10.5            # كل سكربتات تبدأ بـ http
-nmap --script=default,vuln 10.10.10.5        # دمج فئات
-nmap --script-args user=admin,pass=admin 10.10.10.5   # تمرير معاملات للسكربت
+nmap -sC 10.10.10.5                          # default scripts
+nmap --script=default 10.10.10.5             # same effect as -sC
+nmap --script=vuln 10.10.10.5                # a whole category
+nmap --script=ftp-anon 10.10.10.5            # a specific named script
+nmap --script=ftp-anon,http-title 10.10.10.5 # multiple scripts
+nmap --script="http-*" 10.10.10.5            # all scripts starting with http
+nmap --script=default,vuln 10.10.10.5        # combine categories
+nmap --script-args user=admin,pass=admin 10.10.10.5   # pass arguments to a script
 ```
 
 ```bash
-# تحديث قاعدة بيانات السكربتات
+# update the script database
 sudo nmap --script-updatedb
 
-# مكان السكربتات على القرص (لينكس عادة)
+# location of scripts on disk (typically on Linux)
 /usr/share/nmap/scripts/
 ```
 
-> **تحذير أمني:** فئات `exploit` و `dos` و `brute` و `intrusive` قد تُعطّل الخدمة أو تُقفل حسابات بعد محاولات فاشلة متكررة. **لا تستخدمها إلا في بيئة فيها إذن صريح** (مثل Lab خاص بك).
+> **Security warning:** the `exploit`, `dos`, `brute`, and `intrusive` categories can crash a service or lock accounts after repeated failed attempts. **Only use them in environments where you have explicit authorization** (like your own Lab).
 
-### 4.4 الفحص الشامل التقليدي (الخيار `-A`)
+### 4.4 The Traditional All-in-One Scan (Option `-A`)
 
 ```bash
 sudo nmap -A 10.10.10.5
 ```
 
-اختصار يفعّل معًا: `-sV` (كشف النسخة) + `-O` (نظام التشغيل) + `-sC` (السكربتات الافتراضية) + Traceroute. شامل وقوي لكنه **بطيء وصاخب جدًا**، لذلك يُفضَّل في الـ Labs وليس في اختبارات تتطلب التخفّي.
+A shortcut that enables together: `-sV` (version detection) + `-O` (OS detection) + `-sC` (default scripts) + Traceroute. Comprehensive and powerful, but **slow and very noisy**, so it's best suited for labs rather than tests requiring stealth.
 
-### 4.5 حفظ النتائج (Output Formats)
+### 4.5 Saving Results (Output Formats)
 
-| الخيار | الصيغة | الاستخدام |
+| Option | Format | Use Case |
 |---|---|---|
-| `-oN file.txt` | Normal | نفس ما تراه على الشاشة |
-| `-oG file.txt` | Grepable | سطر واحد لكل هدف، سهل الفلترة بـ `grep`/`awk` (قديمة لكنها مفيدة سريعًا) |
-| `-oX file.xml` | XML | للمعالجة الآلية ولتحويلها لتقرير HTML |
-| `-oA basename` | **الثلاثة معًا** | ينتج `basename.nmap` و `.gnmap` و `.xml` بضربة واحدة |
+| `-oN file.txt` | Normal | exactly what you see on screen |
+| `-oG file.txt` | Grepable | one line per target, easy to filter with `grep`/`awk` (old but quick) |
+| `-oX file.xml` | XML | for automated processing and converting into an HTML report |
+| `-oA basename` | **All three at once** | produces `basename.nmap`, `.gnmap`, and `.xml` in one go |
 
 ```bash
 sudo nmap -sS -sV -oA scan_results 10.10.10.5
-# ينتج: scan_results.nmap / scan_results.gnmap / scan_results.xml
+# produces: scan_results.nmap / scan_results.gnmap / scan_results.xml
 
-# تحويل XML إلى تقرير HTML قابل للمشاركة
+# convert XML into a shareable HTML report
 xsltproc scan_results.xml -o scan_report.html
 ```
 
-**لماذا نحفظ النتائج دائمًا؟** في الاختبارات الحقيقية (وفي الـ CTF الطويلة) تفحص عشرات الأجهزة؛ حفظ النتائج يوفر مرجعًا تعود إليه بدل إعادة الفحص، ويتيح أتمتة المعالجة لاحقًا (مثل ربطها بأدوات أخرى).
+**Why always save results?** In real engagements (and long CTFs) you scan dozens of machines; saving results gives you a reference instead of re-scanning, and allows automated processing later (such as feeding them into other tools).
 
-### 4.6 منظور المهاجم والمدافع
+### 4.6 Attacker and Defender Perspective
 
-| | المهاجم | المدافع |
+| | Attacker | Defender |
 |---|---|---|
-| **بعد اكتشاف المنافذ** | يشغّل `-sV` و `-sC` لتحديد النسخ الدقيقة وربطها بـ CVE محددة (عبر `searchsploit` مثلًا) | يراقب حركة NSE المميزة (محاولات استعلام غير معتادة من نفس IP على بروتوكولات متعددة) |
-| **OS Detection** | يحدد نوع الهجمات المناسبة (Windows له ثغرات مختلفة عن Linux) | يُخفي أو يُعدّل TTL/Banner للتشويش (Honeypots تفعل العكس: تخدع المهاجم بنظام وهمي) |
-| **توثيق النتائج** | يحتفظ بـ `-oA` لكل مرحلة؛ يبني عليها تقرير الاختراق (Pentest Report) | يحلل سجلات IDS بحثًا عن أنماط NSE لمعرفة ماذا فحص المهاجم بالضبط |
+| **After finding open ports** | Runs `-sV` and `-sC` to pin down exact versions and link them to specific CVEs (via `searchsploit`, for example) | Watches for distinctive NSE traffic (unusual queries across multiple protocols from the same IP) |
+| **OS Detection** | Determines which exploits are relevant (Windows has different vulnerabilities than Linux) | Hides or alters TTL/Banner to confuse scanners (honeypots do the opposite: deceive the attacker with a fake system) |
+| **Documenting results** | Keeps `-oA` output from each stage; builds a pentest report from it | Analyzes IDS logs to see exactly what the attacker scanned for |
 
-### 4.7 حل أسئلة الـ Room 4
+### 4.7 Answered Questions — Room 4
 
-#### الأسئلة النظرية
+#### Theory Questions
 
-| السؤال | الإجابة |
+| Question | Answer |
 |---|---|
-| خيار كشف الخدمة والنسخة | `-sV` |
-| خيار كشف نظام التشغيل | `-O` |
-| خيار تشغيل السكربتات الافتراضية | `-sC` |
-| ما يعادل `-sC`؟ | `--script=default` |
-| خيار الفحص الشامل (كل شيء معًا) | `-A` |
-| ماذا يشمل `-A`؟ | **Service Version + OS Detection + Default Scripts + Traceroute** |
-| اللغة التي كُتبت بها سكربتات NSE | **Lua** |
-| فئة السكربتات التي تبحث عن ثغرات معروفة | **vuln** |
-| فئة السكربتات الآمنة وغير المؤذية | **safe** |
-| فئة سكربتات هجمات القاموس/التخمين | **brute** |
-| فئة سكربتات محاولة الاستغلال الفعلي | **exploit** |
-| قاعدة بيانات بصمات أنظمة التشغيل | **nmap-os-db** |
-| قاعدة بيانات بصمات الخدمات | **nmap-service-probes** |
-| خيار حفظ النتيجة بصيغة عادية | `-oN` |
-| خيار حفظ النتيجة بصيغة Grepable | `-oG` |
-| خيار حفظ النتيجة بصيغة XML | `-oX` |
-| خيار حفظ الثلاث صيغ دفعة واحدة | `-oA` |
-| خيار تمرير معاملات (Arguments) لسكربت NSE | `--script-args` |
-| أمر تحديث قاعدة بيانات السكربتات | `nmap --script-updatedb` |
+| Option for service and version detection | `-sV` |
+| Option for OS detection | `-O` |
+| Option to run default scripts | `-sC` |
+| What's equivalent to `-sC`? | `--script=default` |
+| Option for the all-in-one scan | `-A` |
+| What does `-A` include? | **Service Version + OS Detection + Default Scripts + Traceroute** |
+| The language NSE scripts are written in | **Lua** |
+| The category that searches for known vulnerabilities | **vuln** |
+| The category of safe, non-intrusive scripts | **safe** |
+| The category for password-guessing/brute-force scripts | **brute** |
+| The category for actively attempting exploitation | **exploit** |
+| Database of OS fingerprints | **nmap-os-db** |
+| Database of service fingerprints | **nmap-service-probes** |
+| Option to save output in normal format | `-oN` |
+| Option to save output in Grepable format | `-oG` |
+| Option to save output in XML format | `-oX` |
+| Option to save all three formats at once | `-oA` |
+| Option to pass arguments to an NSE script | `--script-args` |
+| Command to update the script database | `nmap --script-updatedb` |
 
-#### الأسئلة العملية (تعتمد على الـ Lab الخاص بك)
+#### Practical Questions (depend on your own Lab)
 
-| ما يطلبه السؤال | الأمر | كيف تستخرج الإجابة |
+| What the question asks | Command | How to read the answer |
 |---|---|---|
-| نسخة الخدمة على منفذ معيّن | `nmap -sV -p PORT MACHINE_IP` | عمود `VERSION` |
-| نظام التشغيل المُخمَّن | `sudo nmap -O MACHINE_IP` | سطر `Running:` أو `OS details:` |
-| نتيجة سكربت vuln معيّن | `nmap --script=vuln -p PORT MACHINE_IP` | يظهر CVE أو ثغرة إن وُجدت تحت اسم المنفذ |
-| محتوى صفحة HTTP الرئيسية (العنوان) | `nmap --script=http-title -p 80 MACHINE_IP` | سطر `http-title:` |
-| فحص شامل وحفظه | `sudo nmap -A -oA full_scan MACHINE_IP` | راجع ملف `full_scan.nmap` |
+| Service version on a given port | `nmap -sV -p PORT MACHINE_IP` | `VERSION` column |
+| Guessed operating system | `sudo nmap -O MACHINE_IP` | `Running:` or `OS details:` line |
+| Result of a specific vuln script | `nmap --script=vuln -p PORT MACHINE_IP` | shows a CVE or vulnerability if found, under the port's name |
+| HTTP home page title | `nmap --script=http-title -p 80 MACHINE_IP` | `http-title:` line |
+| A full scan and saving it | `sudo nmap -A -oA full_scan MACHINE_IP` | check the `full_scan.nmap` file |
 
 ---
 <a id="recap"></a>
 
-## 5) Topic Transition Recap: مراجعة شاملة وخطة عمل كاملة
+## 5) Topic Transition Recap: Full Review and Workflow
 
-هذا القسم الأخير في الموديول يربط كل شيء معًا. الفكرة أنك الآن قادر على بناء **منهجية فحص كاملة (Scanning Methodology)** بدل تذكّر أوامر منفصلة.
+This final section of the module ties everything together. The idea is that you're now able to build a full **Scanning Methodology** instead of just remembering isolated commands.
 
-### 5.1 المنهجية الكاملة خطوة بخطوة
+### 5.1 The Full Methodology, Step by Step
 
 ```bash
-# ===== المرحلة 1: اكتشاف الأجهزة الحية =====
+# ===== STAGE 1: Discover live hosts =====
 sudo nmap -sn 10.10.10.0/24 -oN hosts_up.txt
 
-# ===== المرحلة 2: فحص سريع لكل المنافذ (TCP) =====
+# ===== STAGE 2: Quick scan of every TCP port =====
 sudo nmap -sS -p- --min-rate 5000 -T4 -oN all_ports.txt 10.10.10.5
 
-# ===== المرحلة 3: فحص عميق فقط للمنافذ المفتوحة (أسرع وأدق) =====
-# (استخرج أرقام المنافذ من نتيجة المرحلة السابقة، مثلًا: 22,80,445)
+# ===== STAGE 3: Deep scan on open ports only (faster and more accurate) =====
+# (pull the port numbers from the previous step's result, e.g.: 22,80,445)
 sudo nmap -sS -sV -sC -p22,80,445 -oN deep_scan.txt 10.10.10.5
 
-# ===== المرحلة 4 (اختياري): فحص UDP لأشهر المنافذ =====
+# ===== STAGE 4 (optional): UDP scan for top ports =====
 sudo nmap -sU --top-ports 20 -oN udp_scan.txt 10.10.10.5
 
-# ===== المرحلة 5: نظام التشغيل + فحص شامل عند الحاجة =====
+# ===== STAGE 5: OS detection + full scan when needed =====
 sudo nmap -O -oN os_scan.txt 10.10.10.5
 
-# ===== المرحلة 6: سكربتات موجهة حسب الخدمة المكتشفة =====
+# ===== STAGE 6: Targeted scripts based on discovered service =====
 nmap --script="ftp-*" -p21 10.10.10.5
 nmap --script=vuln -p80,443 10.10.10.5
 
-# ===== المرحلة 7: توثيق كل شيء =====
+# ===== STAGE 7: Document everything =====
 sudo nmap -A -oA final_report 10.10.10.5
 ```
 
-> **لماذا هذا الترتيب مهم؟** فحص كل الـ Ports (`-p-`) سريعًا أولًا ثم التعمق لاحقًا بـ `-sV -sC` فقط على المفتوح منها = توفير وقت هائل. فحص `-A -p-` من البداية على شبكة كاملة قد يأخذ ساعات.
+> **Why does this order matter?** Scanning all ports (`-p-`) quickly first, then going deeper only on the ones that are open with `-sV -sC` = huge time savings. Running `-A -p-` from the start on a full network might take hours.
 
-### 5.2 خريطة ذهنية: أي خيار أستخدم متى؟
+### 5.2 Mental Map: Which Option Do I Use When?
 
-| أريد أن... | استخدم |
+| I want to... | Use |
 |---|---|
-| أعرف الأجهزة الحية على شبكتي المحلية (الأدق) | `sudo nmap -PR -sn <subnet>` |
-| أعرف الأجهزة الحية عبر الإنترنت (بعيدة) | `sudo nmap -PE -PS443 -sn <range>` |
-| أفحص كل منفذ TCP بسرعة | `sudo nmap -sS -p- --min-rate 5000` |
-| أتهرب من Firewall بسيط | جرّب `-sF` / `-sN` / `-sX` ثم قارن |
-| أعرف دقة الـ Firewall (stateful أم لا) | `sudo nmap -sA` |
-| أعرف النسخة الدقيقة لخدمة | `nmap -sV -p<port>` |
-| أعرف نظام التشغيل | `sudo nmap -O` |
-| أبحث عن ثغرات معروفة تلقائيًا | `nmap --script=vuln` |
-| أخفي هويتي تمامًا | `sudo nmap -sI <zombie>:<port>` |
-| أوثّق كل شيء لتقرير | `-oA basename` |
+| Find live hosts on my local network (most accurate) | `sudo nmap -PR -sn <subnet>` |
+| Find live hosts over the internet (remote) | `sudo nmap -PE -PS443 -sn <range>` |
+| Scan every TCP port quickly | `sudo nmap -sS -p- --min-rate 5000` |
+| Evade a simple firewall | try `-sF` / `-sN` / `-sX` and compare |
+| Learn how accurate a firewall is (stateful or not) | `sudo nmap -sA` |
+| Get the exact version of a service | `nmap -sV -p<port>` |
+| Determine the OS | `sudo nmap -O` |
+| Automatically search for known vulnerabilities | `nmap --script=vuln` |
+| Hide my identity completely | `sudo nmap -sI <zombie>:<port>` |
+| Document everything for a report | `-oA basename` |
 
-### 5.3 سيناريو تطبيقي متكامل (مثال واقعي)
+### 5.3 A Full Real-World Scenario
 
-لنفترض أنك بدأت فحص جهاز CTF جديد (`10.10.10.50`) من الصفر، هذا هو تسلسل تفكيرك:
+Suppose you start scanning a new CTF machine (`10.10.10.50`) from scratch — here's your thought process in sequence:
 
-1. **"هل الجهاز حيّ؟"** -> `ping -c1 10.10.10.50` أو `nmap -sn`.
-2. **"ما المفتوح؟"** -> `sudo nmap -p- --min-rate 5000 -T4 10.10.10.50` (سريع وشامل).
-3. **"رأيت Ports: 22, 80, 445. ما تفاصيلها؟"** -> `sudo nmap -sC -sV -p22,80,445 10.10.10.50`.
-4. **"80 = Apache 2.4.41. هل توجد ثغرة معروفة؟"** -> `nmap --script=vuln -p80 10.10.10.50` أو `searchsploit apache 2.4.41`.
-5. **"445 تعني SMB. هل تسمح بدخول مجهول؟"** -> `nmap --script=smb-enum-shares,smb-os-discovery -p445 10.10.10.50`.
-6. **"هل فاتني شيء في UDP؟"** -> `sudo nmap -sU --top-ports 20 10.10.10.50`.
-7. **"وثّق كل شيء"** -> أعد الخطوات المهمة بـ `-oA` واحفظ في مجلد المشروع.
+1. **"Is the host up?"** -> `ping -c1 10.10.10.50` or `nmap -sn`.
+2. **"What's open?"** -> `sudo nmap -p- --min-rate 5000 -T4 10.10.10.50` (fast and comprehensive).
+3. **"I see ports 22, 80, 445. What are the details?"** -> `sudo nmap -sC -sV -p22,80,445 10.10.10.50`.
+4. **"Port 80 = Apache 2.4.41. Any known vulnerability?"** -> `nmap --script=vuln -p80 10.10.10.50` or `searchsploit apache 2.4.41`.
+5. **"Port 445 means SMB. Does it allow anonymous access?"** -> `nmap --script=smb-enum-shares,smb-os-discovery -p445 10.10.10.50`.
+6. **"Did I miss anything in UDP?"** -> `sudo nmap -sU --top-ports 20 10.10.10.50`.
+7. **"Document everything"** -> re-run the key steps with `-oA` and save to your project folder.
 
-هذا بالضبط ما يُقصد بـ **"Topic Transition"**: الانتقال من معرفة أوامر منفردة إلى **التفكير كمختبر اختراق** يبني قراره بناءً على نتيجة الخطوة السابقة.
+This is exactly what "Topic Transition" means: moving from knowing individual commands to **thinking like a penetration tester**, building each decision on the result of the previous step.
 
 ---
 
 <a id="cheatsheet"></a>
 
-## 6) Cheat Sheet: كل الأوامر في صفحة واحدة
+## 6) Cheat Sheet: Every Command on One Page
 
-### اكتشاف الأجهزة
+### Host Discovery
 ```bash
-nmap -sL -n 10.10.10.0/24                # عرض الأهداف فقط (لا فحص)
-sudo nmap -sn -PR 10.10.10.0/24          # ARP (شبكة محلية، الأدق)
+nmap -sL -n 10.10.10.0/24                # show targets only (no scan)
+sudo nmap -sn -PR 10.10.10.0/24          # ARP (local network, most accurate)
 sudo nmap -sn -PE 10.10.10.0/24          # ICMP Echo
 sudo nmap -sn -PP 10.10.10.0/24          # ICMP Timestamp
 sudo nmap -sn -PM 10.10.10.0/24          # ICMP Address Mask
@@ -1033,107 +1033,107 @@ sudo nmap -sn -PA80 10.10.10.0/24        # TCP ACK Ping
 sudo nmap -sn -PU53 10.10.10.0/24        # UDP Ping
 ```
 
-### فحص المنافذ الأساسي
+### Basic Port Scanning
 ```bash
-nmap -sT 10.10.10.5                      # TCP Connect (لا يحتاج root)
-sudo nmap -sS 10.10.10.5                 # TCP SYN (الافتراضي مع root)
+nmap -sT 10.10.10.5                      # TCP Connect (no root needed)
+sudo nmap -sS 10.10.10.5                 # TCP SYN (default with root)
 sudo nmap -sU 10.10.10.5                 # UDP Scan
-sudo nmap -sS -p- 10.10.10.5             # كل الـ 65535 منفذ
-sudo nmap -F 10.10.10.5                  # أشهر 100 منفذ
-nmap --top-ports 20 10.10.10.5           # أشهر 20 منفذ
-sudo nmap -sS -p- --min-rate 5000 -T4 10.10.10.5   # سريع جدًا
+sudo nmap -sS -p- 10.10.10.5             # all 65535 ports
+sudo nmap -F 10.10.10.5                  # top 100 ports
+nmap --top-ports 20 10.10.10.5           # top 20 ports
+sudo nmap -sS -p- --min-rate 5000 -T4 10.10.10.5   # very fast
 ```
 
-### فحص متقدم / تهرّب
+### Advanced / Evasion Scans
 ```bash
 sudo nmap -sN 10.10.10.5                 # Null Scan
 sudo nmap -sF 10.10.10.5                 # FIN Scan
 sudo nmap -sX 10.10.10.5                 # Xmas Scan
 sudo nmap -sM 10.10.10.5                 # Maimon Scan
-sudo nmap -sA 10.10.10.5                 # ACK Scan (رسم خريطة Firewall)
-sudo nmap --scanflags SYNFIN 10.10.10.5  # أعلام مخصصة
-sudo nmap -D RND:5 10.10.10.5            # Decoys عشوائية
-sudo nmap --spoof-mac 0 10.10.10.5       # MAC عشوائي
+sudo nmap -sA 10.10.10.5                 # ACK Scan (firewall mapping)
+sudo nmap --scanflags SYNFIN 10.10.10.5  # custom flags
+sudo nmap -D RND:5 10.10.10.5            # random Decoys
+sudo nmap --spoof-mac 0 10.10.10.5       # random MAC
 sudo nmap -sI zombie_ip:port target_ip   # Idle (Zombie) Scan
 ```
 
-### كشف الخدمات ونظام التشغيل والسكربتات
+### Service/OS Detection and Scripts
 ```bash
-nmap -sV 10.10.10.5                      # كشف النسخة
-sudo nmap -O 10.10.10.5                  # كشف نظام التشغيل
-nmap -sC 10.10.10.5                      # السكربتات الافتراضية
-nmap --script=vuln 10.10.10.5            # بحث عن ثغرات
-nmap --script=ftp-anon -p21 10.10.10.5   # سكربت محدد
-sudo nmap -A 10.10.10.5                  # كل شيء معًا
+nmap -sV 10.10.10.5                      # version detection
+sudo nmap -O 10.10.10.5                  # OS detection
+nmap -sC 10.10.10.5                      # default scripts
+nmap --script=vuln 10.10.10.5            # search for vulnerabilities
+nmap --script=ftp-anon -p21 10.10.10.5   # a specific script
+sudo nmap -A 10.10.10.5                  # everything at once
 ```
 
-### الحفظ والتحكم في السرعة
+### Output and Speed Control
 ```bash
-sudo nmap -sS -sV -oA results 10.10.10.5 # حفظ بكل الصيغ
-nmap -T4 10.10.10.5                      # سريع (الأنسب للـ CTF)
-nmap --min-rate 5000 10.10.10.5          # معدل إرسال مرتفع
-nmap -n 10.10.10.5                       # بدون DNS lookup (أسرع)
-nmap --reason 10.10.10.5                 # اعرض سبب كل حالة
-nmap --open 10.10.10.5                   # اعرض المفتوح فقط
+sudo nmap -sS -sV -oA results 10.10.10.5 # save in all formats
+nmap -T4 10.10.10.5                      # fast (best for CTFs)
+nmap --min-rate 5000 10.10.10.5          # high send rate
+nmap -n 10.10.10.5                       # no DNS lookup (faster)
+nmap --reason 10.10.10.5                 # show the reason for each state
+nmap --open 10.10.10.5                   # show only open ports
 ```
 
 ---
 
 <a id="troubleshooting"></a>
 
-## 7) أخطاء شائعة وحلولها
+## 7) Common Mistakes and How to Fix Them
 
-| المشكلة | السبب المحتمل | الحل |
+| Problem | Likely Cause | Fix |
 |---|---|---|
-| `Host seems down` رغم تأكدك أن الجهاز شغّال | Firewall يحجب ICMP Ping | أضف `-Pn` لتخطّي الاكتشاف والفحص مباشرة |
-| النتائج بطيئة جدًا | فحص كل الـ Ports بالإعدادات الافتراضية | استخدم `--min-rate 5000 -T4` أو فحص `--top-ports` أولًا |
-| `-sS` لا يعمل / رسالة تتعلق بالصلاحيات | تشغّل بدون root | أضف `sudo` قبل الأمر |
-| منافذ UDP كلها `open\|filtered` | طبيعة UDP (لا رد لا يعني شيئًا مؤكدًا) | أضف `-sV` لإرسال Payloads تستثير ردًا حقيقيًا |
-| Null/FIN/Xmas تعطي كل شيء "closed" أو "open" بلا تمييز | الهدف Windows ولا يتبع RFC 793 | هذه الفحوصات غير موثوقة ضد Windows، استخدم `-sS` بدلًا منها |
-| `-O` تعطي "No exact OS matches" | لا يوجد Port مفتوح وآخر مغلق كافٍ للمقارنة | افحص Ports أكثر، أو استخدم `--osscan-guess` |
-| نتائج مختلفة بين كل تشغيل | الشبكة غير مستقرة أو IDS يتدخل | أضف `--max-retries 2` وخفّف السرعة بـ `-T2` |
-| `--script=vuln` بطيء جدًا | يجرّب سكربتات كثيرة على منافذ كثيرة | حدد المنافذ بـ `-p` بدل فحص شامل |
+| `Host seems down` even though you're sure it's up | A Firewall is blocking ICMP Ping | Add `-Pn` to skip discovery and scan directly |
+| Results are very slow | Scanning all ports with default settings | Use `--min-rate 5000 -T4` or scan `--top-ports` first |
+| `-sS` doesn't work / a permissions-related message | Running without root | Add `sudo` before the command |
+| UDP ports are all `open\|filtered` | Normal UDP behavior (no reply doesn't confirm anything) | Add `-sV` to send payloads that trigger a real reply |
+| Null/FIN/Xmas report everything as "closed" or "open" indiscriminately | The target is Windows and doesn't follow RFC 793 | These scans are unreliable against Windows; use `-sS` instead |
+| `-O` returns "No exact OS matches" | Not enough open/closed port combination to compare against | Scan more ports, or use `--osscan-guess` |
+| Results differ between runs | Unstable network or IDS interference | Add `--max-retries 2` and slow down with `-T2` |
+| `--script=vuln` is very slow | Trying many scripts against many ports | Narrow it down to specific ports with `-p` instead of scanning everything |
 
 ---
 
 <a id="resources"></a>
 
-## 8) المراجع ومصادر التعلّم
+## 8) References and Learning Resources
 
-- **الدليل الرسمي لـ Nmap (Nmap Reference Guide):** `https://nmap.org/book/man.html`
-- **كتاب Nmap الرسمي الكامل مجانًا أونلاين:** `https://nmap.org/book/toc.html`
-- **قاعدة بيانات سكربتات NSE الرسمية:** `https://nmap.org/nsedoc/`
-- **موقع التدريب الرسمي للتجربة القانونية:** `scanme.nmap.org`
-- **TryHackMe — موديول Nmap:** الرومات الخمسة التي يغطيها هذا الملف
-- **RFC 793 (مواصفة TCP الأصلية):** مرجع لفهم سبب عمل Null/FIN/Xmas Scans
-- **searchsploit (من Exploit-DB):** للربط بين نتائج `-sV` والثغرات المعروفة
-- **HackTricks — قسم Pentesting Network:** مرجع ممتاز لأوامر Nmap العملية بالسيناريوهات
+- **Official Nmap Reference Guide:** `https://nmap.org/book/man.html`
+- **The full official Nmap book, free online:** `https://nmap.org/book/toc.html`
+- **Official NSE script database:** `https://nmap.org/nsedoc/`
+- **Official training site for legal practice:** `scanme.nmap.org`
+- **TryHackMe — Nmap module:** the five Rooms this guide covers
+- **RFC 793 (the original TCP specification):** reference for understanding why Null/FIN/Xmas scans work the way they do
+- **searchsploit (from Exploit-DB):** for linking `-sV` results to known vulnerabilities
+- **HackTricks — Pentesting Network section:** an excellent reference for practical Nmap commands with real scenarios
 
 ---
 
 <a id="glossary"></a>
 
-## 9) قاموس المصطلحات
+## 9) Glossary
 
-| المصطلح | الشرح |
+| Term | Explanation |
 |---|---|
-| **Host Discovery** | مرحلة تحديد الأجهزة الحيّة على الشبكة قبل فحص الـ Ports |
-| **Port Scanning** | إرسال حزم لكل Port لمعرفة حالته (مفتوح/مغلق/محجوب) |
-| **Three-Way Handshake** | عملية بدء اتصال TCP: SYN -> SYN/ACK -> ACK |
-| **Stateful Firewall** | يتتبع حالة الاتصال كاملة (يعرف أن ACK بلا SYN سابق أمر غريب) |
-| **Stateless Firewall** | يفلتر فقط بناءً على رقم Port/IP بدون تتبع حالة الاتصال |
-| **IDS / IPS** | أنظمة كشف/منع التسلل التي تراقب حركة المرور المشبوهة |
-| **NSE** | Nmap Scripting Engine، محرك السكربتات المبني بلغة Lua |
-| **CVE** | معرّف موحّد عالميًا لثغرة أمنية معروفة |
-| **Zombie Host** | جهاز خامل يُستخدم كوسيط في هجوم Idle Scan |
-| **IPID** | رقم تعريف فريد لكل حزمة IP، يُستخدم لتتبع التسلسل في Idle Scan |
-| **Banner Grabbing** | استخراج معلومات الخدمة من الرسالة الترحيبية (Banner) التي ترسلها عند الاتصال |
-| **Enumeration** | جمع معلومات تفصيلية عن خدمة أو نظام بعد اكتشافه |
+| **Host Discovery** | the phase of identifying live hosts on the network before scanning ports |
+| **Port Scanning** | sending packets to each port to determine its state (open/closed/filtered) |
+| **Three-Way Handshake** | the process of starting a TCP connection: SYN -> SYN/ACK -> ACK |
+| **Stateful Firewall** | tracks the full connection state (knows an ACK with no prior SYN is suspicious) |
+| **Stateless Firewall** | filters only by port/IP number without tracking connection state |
+| **IDS / IPS** | systems that detect/prevent intrusions by watching for suspicious traffic |
+| **NSE** | Nmap Scripting Engine, the scripting engine built in Lua |
+| **CVE** | a globally standardized identifier for a known security vulnerability |
+| **Zombie Host** | an idle device used as an intermediary in an Idle Scan attack |
+| **IPID** | a unique identifier for each IP packet, used to track sequencing in an Idle Scan |
+| **Banner Grabbing** | extracting service information from the welcome message (Banner) sent upon connection |
+| **Enumeration** | gathering detailed information about a service or system after discovering it |
 
 ---
 
-### كلمة أخيرة
+### Final Word
 
-Nmap أداة ضخمة، وهذا الدليل يغطي كل ما تحتاجه لتبدأ قويًا وتفهم **لماذا** يعمل كل أمر وليس فقط **كيف** تكتبه. تدرّب على `scanme.nmap.org` وعلى أجهزة TryHackMe/HackTheBox الخاصة بك، واحفظ دائمًا: **الفهم > الحفظ**.
+Nmap is a massive tool, and this guide covers everything you need to start strong and understand **why** each command works, not just **how** to type it. Practice on `scanme.nmap.org` and on your own TryHackMe/HackTheBox machines, and always remember: **understanding > memorizing**.
 
-**بالتوفيق في رحلتك في الـ Penetration Testing 🛡️**
+**Good luck on your penetration testing journey 🛡️**
